@@ -271,7 +271,12 @@ def resolve_under_root(path: str) -> Path:
     if user_path.is_absolute():
         raise TraversalError(f"absolute paths are not allowed: '{path}'")
     try:
-        candidate = (root / user_path).resolve()
+        # strict=True raises OSError on symlink loops AND on missing paths.
+        # FileNotFoundError is fine — the target may not exist yet (for writes);
+        # fall back to non-strict resolution in that case.
+        candidate = (root / user_path).resolve(strict=True)
+    except FileNotFoundError:
+        candidate = (root / user_path).resolve(strict=False)
     except (OSError, RuntimeError) as exc:
         raise TraversalError(
             f"path '{path}' could not be resolved: {exc}"
