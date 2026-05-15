@@ -1,0 +1,19 @@
+{
+  "name": "javis-skills",
+  "owner": {
+    "name": "Samuel Wei",
+    "email": "samuel@deepshare.ai"
+  },
+  "plugins": [
+    {
+      "name": "javis-skills",
+      "description": "Javis personal-plugin skills: local filesystem operations (more skills coming)",
+      "version": "0.1.1",
+      "source": "./",
+      "author": {
+        "name": "Samuel Wei",
+        "email": "samuel@deepshare.ai"
+      }
+    }
+  ]
+}
