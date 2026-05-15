@@ -1,9 +1,9 @@
 {
   "name": "javis-skills",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Javis personal-plugin skills: local filesystem operations (more skills coming)",
-  "author": "Samuel Wei",
-  "skills": [
-    "skills/javis-filesystem"
-  ]
+  "author": {
+    "name": "Samuel Wei",
+    "email": "samuel@deepshare.ai"
+  }
 }
