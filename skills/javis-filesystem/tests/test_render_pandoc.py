@@ -73,3 +73,13 @@ def test_renders_when_pandoc_present(tmp_path: Path):
     assert payload["skipped"] is False
     assert payload["exit_code"] == 0
     assert (tmp_path / "out" / "paper.tex").exists()
+
+
+@pytest.mark.skipif(shutil.which("pandoc") is None, reason="pandoc not installed")
+def test_emits_err_when_pandoc_fails(tmp_path: Path):
+    """When pandoc itself returns non-zero, the script must exit non-zero too."""
+    _scaffold(tmp_path)
+    # Bad bibliography path will cause pandoc to fail.
+    res = _run(tmp_path, "--bibliography", "inputs/refs.bib", "--input", "out/nonexistent.md")
+    assert res.returncode != 0
+    assert "pandoc" in res.stderr.lower() or "exited" in res.stderr.lower()

@@ -76,3 +76,16 @@ def test_subpath(tmp_path: Path):
     res = _run(tmp_path, "paper-a")
     assert res.returncode == 0, res.stderr
     assert (base / "out" / "paper.md").read_text() == "X"
+
+
+def test_assemble_skips_symlinked_sections(tmp_path: Path):
+    """Symlinked sections must be skipped during assembly (safety §1)."""
+    _scaffold(tmp_path)
+    outside = tmp_path.parent / "evil.md"
+    outside.write_text("EVIL CONTENT")
+    (tmp_path / "out" / "sections" / "04-link.md").symlink_to(outside)
+    res = _run(tmp_path)
+    assert res.returncode == 0, res.stderr
+    content = (tmp_path / "out" / "paper.md").read_text()
+    assert "EVIL" not in content
+    assert json.loads(res.stdout)["sections_included"] == 3

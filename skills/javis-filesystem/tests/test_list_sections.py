@@ -63,3 +63,18 @@ def test_subpath_argument(tmp_path: Path):
     assert res.returncode == 0, res.stderr
     out = json.loads(res.stdout)
     assert out[0]["path"] == "out/sections/01-x.md"
+
+
+def test_skips_symlinked_sections(tmp_path: Path):
+    """Symlinks in the sections dir must be silently skipped (safety §1)."""
+    base = _scaffold(tmp_path)
+    (base / "out" / "sections" / "01-real.md").write_text("real")
+    # Create a symlink that looks like a valid section, but points outside.
+    outside = tmp_path / "outside.md"
+    outside.write_text("outside content")
+    (base / "out" / "sections" / "02-link.md").symlink_to(outside)
+    res = _run(tmp_path)
+    assert res.returncode == 0, res.stderr
+    out = json.loads(res.stdout)
+    slugs = [s["slug"] for s in out]
+    assert slugs == ["real"]

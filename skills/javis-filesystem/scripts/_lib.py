@@ -12,7 +12,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
 
 class TraversalError(Exception):
@@ -54,7 +54,7 @@ def emit_ok(data: Any) -> None:
     sys.stdout.flush()
 
 
-def emit_err(message: str, code: int = 1) -> None:
+def emit_err(message: str, code: int = 1) -> NoReturn:
     """Print a JSON error payload to stderr and exit with `code`."""
     sys.stderr.write(json.dumps({"error": message}))
     sys.stderr.write("\n")

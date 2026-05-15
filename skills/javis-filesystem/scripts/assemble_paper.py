@@ -30,6 +30,9 @@ def _list_sections(base: Path) -> list[Path]:
         return []
     matched: list[tuple[int, Path]] = []
     for p in sections_dir.iterdir():
+        if p.is_symlink():
+            # Reject symlinked sections — safety.md §1 requires resolution within root.
+            continue
         if not p.is_file():
             continue
         m = _SECTION_RE.match(p.name)

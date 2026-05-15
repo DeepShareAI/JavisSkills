@@ -35,6 +35,8 @@ def run(argv: list[str]) -> None:
     out: list[dict] = []
     if sections_dir.exists() and sections_dir.is_dir():
         for p in sections_dir.iterdir():
+            if p.is_symlink():
+                continue
             if not p.is_file():
                 continue
             m = _SECTION_RE.match(p.name)

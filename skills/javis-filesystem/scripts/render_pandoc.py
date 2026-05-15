@@ -63,7 +63,6 @@ def run(argv: list[str]) -> None:
     parser.add_argument("--output", default="out/paper.tex")
     parser.add_argument("--template", default=None)
     parser.add_argument("--bibliography", default="inputs/refs.bib")
-    parser.add_argument("--extra-arg", action="append", dest="extra_args_parsed", default=[])
 
     # Filter out --extra-arg args for argparse since we handled them
     filtered_argv = []
@@ -136,6 +135,11 @@ def run(argv: list[str]) -> None:
 
     bytes_written = output_abs.stat().st_size if output_abs.exists() else 0
     stderr_tail = (proc.stderr or "")[-2048:]
+    if proc.returncode != 0:
+        _lib.emit_err(
+            f"pandoc exited {proc.returncode}: {stderr_tail}",
+            code=7,
+        )
     _lib.emit_ok({
         "skipped": False,
         "exit_code": proc.returncode,
