@@ -11,14 +11,28 @@ A personal-plugin bundle for the Javis ecosystem.
 
 ## Install
 
-Install as a personal plugin. The plugin manifest at `.claude-plugin/plugin.json` declares both skills.
+Install in Claude Desktop via **Customize → Plugins → + → Add marketplace** and paste this repo's GitHub `owner/repo` (`DeepShareAI/JavisSkills`) into the URL field. Click Sync, then click the `+` on the **Javis skills** card to install. The plugin's skills are loaded in **Claude Code (Code mode)** sessions, not in regular Chat — use Code mode to invoke them.
 
 ## javis-filesystem prerequisites
 
-The helper scripts need Python 3.11+ and two libraries:
+Only `read_xlsx.py` needs an external library: `openpyxl`. Python 3.11+ is required for all scripts. Pick one of the install paths:
+
+**Preferred — isolated venv (no system conflicts, works on PEP-668 Pythons):**
 
 ```bash
-pip3 install --user openpyxl PyYAML
+python3 -m venv ~/.javis-filesystem-venv
+~/.javis-filesystem-venv/bin/pip install openpyxl
+# Invoke read_xlsx via the venv's python:
+~/.javis-filesystem-venv/bin/python3 <plugin-root>/skills/javis-filesystem/scripts/read_xlsx.py ...
+```
+
+**Or — user-site install (simpler):**
+
+```bash
+pip3 install --user openpyxl
+# If your Python is PEP-668 managed (newer Homebrew, Debian/Ubuntu system Python)
+# you'll see "error: externally-managed-environment". In that case:
+pip3 install --user --break-system-packages openpyxl
 ```
 
 To render papers, install `pandoc` separately. If pandoc is missing, `render_pandoc.py` emits `{"skipped": true, "reason": "pandoc not on PATH"}` and exits 0 — it does not fail loudly.

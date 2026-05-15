@@ -65,6 +65,16 @@ def test_subpath_argument(tmp_path: Path):
     assert out[0]["path"] == "out/sections/01-x.md"
 
 
+def test_errors_when_subpath_points_at_out_sections(tmp_path: Path):
+    """Pointing at out/sections itself is a common mistake; emit a helpful error."""
+    base = _scaffold(tmp_path)
+    (base / "out" / "sections" / "01-real.md").write_text("real")
+    res = _run(tmp_path, "out/sections")
+    assert res.returncode == 8
+    assert "sections directory" in res.stderr
+    assert "paper-project" in res.stderr.lower() or "ROOT" in res.stderr
+
+
 def test_skips_symlinked_sections(tmp_path: Path):
     """Symlinks in the sections dir must be silently skipped (safety §1)."""
     base = _scaffold(tmp_path)

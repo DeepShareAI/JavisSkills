@@ -55,13 +55,24 @@ When invoking helper scripts, use the absolute path resolved from this SKILL.md'
 
 ## Setup (one time per machine)
 
-If a script that needs openpyxl or PyYAML fails with `ModuleNotFoundError`, install requirements once:
+Only `read_xlsx.py` needs an external library (`openpyxl`). If it fails with `ModuleNotFoundError`, install once using whichever path matches the user's Python.
 
+**Preferred — isolated install (works everywhere, no system conflicts):**
 ```bash
-pip3 install --user -r <plugin-root>/skills/javis-filesystem/scripts/requirements.txt
+python3 -m venv ~/.javis-filesystem-venv
+~/.javis-filesystem-venv/bin/pip install -r <plugin-root>/skills/javis-filesystem/scripts/requirements.txt
+# then invoke scripts with the venv's python:
+JAVIS_FS_ROOT=... ~/.javis-filesystem-venv/bin/python3 <plugin-root>/skills/javis-filesystem/scripts/read_xlsx.py ...
 ```
 
-State this prerequisite to the user before falling through to the install command.
+**Or — user-site install (simpler, but PEP 668 on newer Homebrew/Debian Pythons rejects it):**
+```bash
+pip3 install --user -r <plugin-root>/skills/javis-filesystem/scripts/requirements.txt
+# If you see "error: externally-managed-environment":
+pip3 install --user --break-system-packages -r <plugin-root>/skills/javis-filesystem/scripts/requirements.txt
+```
+
+State the prerequisite to the user and pick the venv path first; only fall back to `--user [--break-system-packages]` if the user prefers a non-venv install.
 
 ## Detail
 
