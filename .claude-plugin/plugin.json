@@ -1,6 +1,6 @@
 {
   "name": "javis-skills",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Javis personal-plugin skills: local filesystem operations (more skills coming)",
   "author": {
     "name": "Samuel Wei",
