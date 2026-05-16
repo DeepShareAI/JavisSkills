@@ -1,8 +1,15 @@
 # Format Guides
 
-Per-format question banks, outline shapes, and source priorities. Load only the section matching the user's chosen format.
+Per-format Step A prompts, MC option flavors, branch question, outline shape, and source priorities.
 
-When asking the questions below, follow the SKILL.md rule: **one question per message**, multiple-choice preferred where it fits. The "Questions" list is the bank, not a script — pick the ones that aren't already answered.
+Load only the section matching the user's Q0 (format) answer. The trunk questions (Q1–Q5) live in `SKILL.md`; this file specifies:
+
+1. The **branch question** to ask immediately after Q0's Step D (before Q1).
+2. **Format-specific framings** for the trunk-question MC options.
+3. The **outline shape** for Phase 6.
+4. **Sources that matter most** for the format.
+
+All questions follow the SKILL.md A → B → C → D loop. Never skip Step C. Never combine questions.
 
 ---
 
@@ -10,12 +17,33 @@ When asking the questions below, follow the SKILL.md rule: **one question per me
 
 Used for: internal/external reports, analyses, decision memos, post-mortems.
 
-### Clarifying questions
-1. **Decision being informed.** What decision should this report inform — go/no-go, budget, hire, strategy shift, retrospective, or something else?
-2. **Stakeholders.** Who are the named readers? Executives? A board? A team? An external client?
-3. **Timeframe.** What period does the analysis cover (last quarter, fiscal year, since launch, a single incident window)?
-4. **Recurrence.** Is this a one-off report or part of a recurring series (monthly, quarterly)? Recurring reports may inherit structure from prior ones.
-5. **Decision deadline.** When does the reader need this by, and when is the decision being made?
+### Branch question (after Q0, before Q1)
+
+**Step A:** "What decision does this report inform — go/no-go, budget, hire, strategy shift, retrospective, or something else?"
+
+**MC construction (Step C):** classification. Build 3 options that interpret the user's Step B answer as one of:
+- Decision report (a specific call needs to be made)
+- Status / monitoring report (no decision; situational awareness)
+- Retrospective / post-mortem (learning from past event)
+- + "Other (describe)"
+
+Record as `decision_purpose`.
+
+### Trunk-question framings for reports
+
+**Q1 — Audience.** Step A is the same as SKILL.md. MC option flavors for a report typically include:
+- Internal executives / leadership (decision-makers)
+- Peer team / cross-functional partners (operational readers)
+- External stakeholders (board, investors, client)
+- + Other
+
+Adapt the labels to whatever the user's Step B answer suggests.
+
+**Q4 — Tone.** Reports skew formal. MC flavors:
+- Neutral / analytical (let the data speak)
+- Directive / recommendation-led (lead with the call)
+- Cautious / hedged (uncertainty is the story)
+- + Other
 
 ### Outline shape
 
@@ -40,12 +68,31 @@ Used for: internal/external reports, analyses, decision memos, post-mortems.
 
 Used for: long-form essays, opinion pieces, magazine-style features, in-depth blog posts.
 
-### Clarifying questions
-1. **Thesis.** In one sentence, what are you arguing or revealing?
-2. **Hook.** What opening scene, question, or claim makes the reader keep going?
-3. **Implied "you".** Who is the reader you're writing to — what do they already believe, and what assumption are you challenging?
-4. **Personal angle.** Is there a first-person thread (your experience, your observation), or is this third-person reporting?
-5. **Target length.** Roughly how long — 800, 1500, 3000+ words?
+### Branch question (after Q0, before Q1)
+
+**Step A:** "What's the hook — the opening scene, question, or claim that earns the reader's next 30 seconds?"
+
+**MC construction (Step C):** prose. Build 3 sharper rephrasings of the user's Step B answer (one-sentence hook options), plus "Other (describe)". Examples of hook flavors:
+- Scene-driven (open in a moment, then zoom out)
+- Question-driven (a contrarian or pointed question)
+- Claim-driven (a bold one-line thesis the rest defends)
+- + Other
+
+Record as `hook`.
+
+### Trunk-question framings for articles
+
+**Q1 — Audience.** MC flavors lean toward reader-relationship rather than role:
+- Same-field insiders (you can assume vocabulary)
+- Adjacent professionals (define jargon)
+- General curious readers (define everything)
+- + Other
+
+**Q4 — Tone.** Articles tolerate range. MC flavors:
+- Reflective / first-person essayist
+- Reported / journalistic
+- Polemical / argumentative
+- + Other
 
 ### Outline shape
 
@@ -70,13 +117,31 @@ Used for: long-form essays, opinion pieces, magazine-style features, in-depth bl
 
 Used for: news pieces, breaking-news reports, dispatches, time-sensitive announcements.
 
-### Clarifying questions
-1. **What happened.** In one sentence, what is the event?
-2. **When.** Date and time, as specific as possible.
-3. **Who is affected.** Who gains, who loses, who has to respond?
-4. **Lede.** What is the single most important fact — the one you'd lead with if the reader only sees one sentence?
-5. **Opposing views.** Is there disagreement on what happened or what it means? Who holds each side?
-6. **Time-sensitivity.** Hours, days, or week-long news cycle?
+### Branch question (after Q0, before Q1)
+
+**Step A:** "What is the lede — the single most important fact that goes in the first sentence?"
+
+**MC construction (Step C):** prose. Build 3 crisper rephrasings of the user's Step B lede candidate. Flavor by news-lede archetype:
+- "What happened" lede (event-first)
+- "Why it matters" lede (impact-first)
+- "Who's affected" lede (people-first)
+- + Other
+
+Record as `lede`.
+
+### Trunk-question framings for news
+
+**Q1 — Audience.** MC flavors:
+- General readers of the publication (no specialist context)
+- Industry / beat readers (assume prior context)
+- Affected community (insiders to the event)
+- + Other
+
+**Q4 — Tone.** News is mostly neutral; MC flavors:
+- Straight news (neutral, factual)
+- Explanatory (extra "why this matters" connective tissue)
+- Investigative (named accountability)
+- + Other
 
 ### Outline shape
 
@@ -101,11 +166,31 @@ Used for: news pieces, breaking-news reports, dispatches, time-sensitive announc
 
 Used for: short blog posts, personal takes, dev journals, opinion shots, tutorials.
 
-### Clarifying questions
-1. **One idea.** What is the single idea this post is about? (If you have more than one, it's two posts.)
-2. **Spark.** What just happened that made you want to write this — a conversation, a bug, a moment, a piece you read?
-3. **Form.** Is this a take (opinion), a tutorial (how-to), or a journal entry (what I did and what I learned)?
-4. **Length.** Quick (200–400 words), standard (500–800), or essay-length (1000+)?
+### Branch question (after Q0, before Q1)
+
+**Step A:** "Is this a take, a tutorial, or a journal entry — and what sparked it?"
+
+**MC construction (Step C):** classification. Build 3 options interpreting the user's Step B answer:
+- Take (an opinion or argument)
+- Tutorial (a how-to, with steps)
+- Journal (what I did and what I learned)
+- + Other
+
+Record as `blog_subtype`.
+
+### Trunk-question framings for blog
+
+**Q1 — Audience.** MC flavors:
+- Peers (same field, casual register)
+- Newcomers (assume nothing)
+- Subscribers / regular readers (callbacks to prior posts allowed)
+- + Other
+
+**Q4 — Tone.** Blogs are usually conversational; MC flavors:
+- Conversational / direct
+- Wry / self-deprecating
+- Earnest / sincere
+- + Other
 
 ### Outline shape
 
@@ -126,12 +211,14 @@ Used for: short blog posts, personal takes, dev journals, opinion shots, tutoria
 
 ## Other
 
-User has a format that doesn't match the above (essay collection, newsletter, video script, talk outline, internal memo, social thread, etc.).
+User's Q0 answer didn't match the four formats above (essay collection, newsletter, video script, talk outline, internal memo, social thread, etc.).
 
-### Approach
-1. Ask the user to describe the format in 1–2 sentences: who reads it, where it lives, how long it is.
-2. Identify the closest match above (report, article, news, blog).
-3. Propose: "I'll use the **<match>** question set and outline as a starting point — does that fit, or should we adjust?"
-4. Adjust the question bank with the user's input before continuing.
+### Branch question (after Q0, before Q1)
 
-If the format truly has no analogue (e.g., a tweet thread or a 30-second video script), ask the user for the structural beats they want and use those as the outline shape. The brief structure in `SKILL.md` still applies.
+**Step A:** "Describe the format in your own words — who reads it, where it lives, roughly how long."
+
+**MC construction (Step C):** Build 3 options proposing the closest match among report / article / news / blog as the starting template, each with a one-line description of why it fits. Plus "Other — none of these, treat it as a custom format".
+
+Record the picked match as `closest_format` and use that section's branch + framings for the rest of the flow.
+
+If "Other — custom" is picked, fall back to asking the user for the structural beats they want and use those as the outline shape. The trunk Q1–Q5 still apply; the brief structure in SKILL.md is unchanged.
