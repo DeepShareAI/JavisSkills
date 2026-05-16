@@ -2,16 +2,19 @@
 
 A personal-plugin bundle for the Javis ecosystem.
 
-## Skills included
+## Components
 
-| Skill | Purpose |
-|---|---|
-| `javis-filesystem` | Local filesystem + paper-project operations. Drop-in replacement for the Workspace-MCP stdio server. |
-| `content-brainstorming` *(planned)* | Structured brainstorming for reports, articles, news pieces, blog posts. Design only — not yet shipped. |
+| Component | Type | Purpose |
+|---|---|---|
+| `javis-filesystem` | Skill | Local filesystem + paper-project operations. Drop-in replacement for the Workspace-MCP stdio server. |
+| `javis-mcp` | Connector | Remote MCP server at `https://mcp.javis.is/mcp`. Voice sessions, transcripts, group transcripts, summaries, full-text search. |
+| `content-brainstorming` *(planned)* | Skill | Structured brainstorming for reports, articles, news pieces, blog posts. Design only — not yet shipped. |
 
 ## Install
 
 Install in Claude Desktop via **Customize → Plugins → + → Add marketplace** and paste this repo's GitHub `owner/repo` (`DeepShareAI/JavisSkills`) into the URL field. Click Sync, then click the `+` on the **Javis skills** card to install. The plugin's skills are loaded in **Claude Code (Code mode)** sessions, not in regular Chat — use Code mode to invoke them.
+
+After installing the plugin, open **Javis skills → Connectors** in the Plugins panel, click **Install** on the `javis-mcp` card, and complete the Clerk sign-in in the browser. The seven voice tools (`list_sessions_tool`, `get_session_tool`, `get_transcript_tool`, `search_transcripts_tool`, `list_groups_tool`, `get_group_transcript_tool`, `list_summaries_tool`) become callable after sign-in.
 
 ## javis-filesystem prerequisites
 
@@ -45,9 +48,19 @@ To render papers, install `pandoc` separately. If pandoc is missing, `render_pan
 
 Path traversal outside the root is rejected.
 
-## Coexistence with javis_mcp
+## javis-mcp connector
 
-`javis-filesystem` is the **filesystem** half of a paired setup. For transcripts, sessions, groups, and summaries, install the **`javis_mcp`** remote connector separately (URL: `https://mcp.javis.is/mcp`). The two surfaces don't overlap.
+The `javis-mcp` connector ships bundled with this plugin (declared in `.mcp.json`). It points at `https://mcp.javis.is/mcp` and exposes seven tools over MCP's streamable-HTTP transport:
+
+- `list_sessions_tool` — list recent voice sessions
+- `get_session_tool` — fetch one session by ID
+- `get_transcript_tool` — full transcript for a session
+- `search_transcripts_tool` — full-text search across all transcripts
+- `list_groups_tool` — list conversation groups
+- `get_group_transcript_tool` — combined transcript for a group
+- `list_summaries_tool` — AI-generated summaries
+
+Auth is OAuth (Clerk). On first install, Claude Desktop runs the discovery flow against the server's `WWW-Authenticate` challenge — no credentials are shipped with the plugin. If you previously added `https://mcp.javis.is/mcp` as a standalone custom connector, remove that entry to avoid a stale duplicate before installing the plugin.
 
 ## Source attribution
 
