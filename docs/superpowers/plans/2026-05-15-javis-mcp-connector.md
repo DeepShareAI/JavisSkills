@@ -8,7 +8,7 @@
 
 **Tech Stack:** Claude Code plugin manifest (`plugin.json`), marketplace JSON (`marketplace.json`), plugin `.mcp.json` (MCP HTTP transport), Markdown for docs.
 
-**Spec reference:** [`docs/specs/2026-05-15-javis-mcp-connector-design.md`](../../specs/2026-05-15-javis-mcp-connector-design.md)
+**Spec reference:** [`docs/superpowers/specs/2026-05-15-javis-mcp-connector-design.md`](../specs/2026-05-15-javis-mcp-connector-design.md)
 
 ---
 
