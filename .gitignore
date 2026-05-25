@@ -6,5 +6,6 @@ __pycache__/
 skills/*/out/
 .venv/
 venv/
+docs/
 docs/superpowers/
 .superpowers/
