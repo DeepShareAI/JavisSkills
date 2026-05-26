@@ -13,6 +13,7 @@ This document defines the literal text of every file generated for a periodic-pu
 | `{{tagline_from_description}}` | first sentence of Q2 | — |
 | `{{trigger_words_csv}}` | Q3 | `每日新闻, daily news, news digest` |
 | `{{trigger_words_bullets}}` | Q3 reformatted | `- "每日新闻"\n- "daily news"\n- "news digest"` |
+| `{{trigger_words_json_array}}` | Q3 reformatted | `"每日新闻", "daily news", "news digest"` (JSON-array contents, including the surrounding quotes per item; the surrounding `[ ]` are already in the package.json template) |
 | `{{cron_crontab}}` | Q4 translated | `0 8 * * *` |
 | `{{cron_tz}}` | follow-up to Q4 | `Asia/Shanghai` |
 | `{{example_trigger_phrase}}` | Q4 + Q6 example | `每天8点推送新闻到telegram` |
