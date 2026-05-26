@@ -9,9 +9,10 @@ Skills run inside a per-user openclaw Docker container (`openclaw-user-<sha256(u
 | Env var | Value | Use |
 |---|---|---|
 | `OPENCLAW_GATEWAY_TOKEN` | Per-user bearer token | Authorization header for callbacks to javis-server |
-| `JAVIS_SERVER_URL` | `http://javis-server:8000` | Base URL for all server endpoints (Docker DNS, internal network `openclaw-user-net`) |
-| `OPENAI_API_KEY` | OpenAI key (if user enabled) | Direct LLM calls bypassing openclaw's model gateway |
-| `ANTHROPIC_API_KEY` | Anthropic key (if user enabled) | Same |
+| `OPENAI_API_KEY` | OpenAI key (if user enabled) | Direct LLM calls bypassing openclaw's model gateway. (Parent process holds it as `OPENCLAW_OPENAI_API_KEY`; rewritten to the canonical name at container start by `_provider_env_overrides`.) |
+| `ANTHROPIC_API_KEY` | Anthropic key (if user enabled) | Same translation: parent has `OPENCLAW_ANTHROPIC_API_KEY`. |
+
+**Reaching javis-server from inside the container:** there is currently NO `JAVIS_SERVER_URL` env var. All per-user containers join the `openclaw-user-net` Docker network where `javis-server` resolves as a DNS name on port 8000. Generated skill code should hardcode `http://javis-server:8000` for callbacks.
 
 Workspace root inside container: `/home/node/.openclaw/workspace/`
 Skill bundles live under: `/home/node/.openclaw/workspace/skills/<slug>/`
@@ -77,9 +78,9 @@ metadata:                       # optional but recommended
 
 The description must mention at least one trigger word; users browsing the Skills tab see this single line.
 
-## Per-user data convention
+## Per-user data convention (pattern for generated skill code)
 
-Each skill that holds per-user state writes to `<skill>/data/users/<userId>.json`. Path safety is mandatory (untrusted `userId`):
+Each skill that holds per-user state writes to `<skill>/data/users/<userId>.json`. The path-safety helpers below are the **canonical pattern** generated skills should include (typically in `scripts/data.js`). They do not exist in openclaw upstream — they're skill-author code, copied into each new skill:
 
 ```js
 function sanitizeId(value) {
