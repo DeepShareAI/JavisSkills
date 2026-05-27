@@ -46,7 +46,7 @@ Default yes. If yes: generates `register.js` + `data.js` + `data/users/` layout.
 Compute conditional flags from answers:
 - `has_cron` = Q4 is non-blank
 - `needs_register` = Q7 yes
-- `needs_data` = Q7 yes OR Q5 includes `pure-local-state`
+- `needs_data` = Q7 yes OR Q5 includes `pure-local-state` OR `has_cron` (push-toggle.js requires data.js helpers)
 - `has_external_http` = Q5 includes `external-http`
 - `pure_node_builtins` = NOT `has_external_http`
 - `has_multi_data_source` = Q5 has 2 or more selected sources

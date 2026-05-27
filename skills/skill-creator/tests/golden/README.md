@@ -25,7 +25,7 @@ Exit code 0 = pass, non-zero = fail (diff is printed).
 ## Adding a fixture
 
 1. Create `<name>/answers.json` (object with keys: slug, description, trigger_words, cron_schedule, cron_tz, data_sources, channels, needs_state).
-2. Create `<name>/prompt.txt` (e.g., `Use the skill-creator skill with these pre-recorded answers: <paste JSON>. Skip Phase 4's interactive checks; just write the files.`).
+2. Create `<name>/prompt.txt` (e.g., `Use the skill-creator skill with these pre-recorded answers: <paste JSON>. After writing the files, run only validation Check 1 (frontmatter) and Check 1b (no leaked {{...}}). Skip Checks 2 and 3 in the golden run.`).
 3. Run `claude -p` by hand once, inspect the output, copy it into `<name>/expected-bundle/`.
 4. Run `./run-golden.sh <name>` — should pass on the second invocation.
 5. Commit.

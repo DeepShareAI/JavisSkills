@@ -30,7 +30,7 @@ This document defines the literal text of every file generated for a periodic-pu
 |---|---|
 | `has_cron` | Q4 is non-blank |
 | `needs_register` | Q7 = yes |
-| `needs_data` | Q7 = yes OR Q5 includes `pure-local-state` |
+| `needs_data` | Q7 = yes OR Q5 includes `pure-local-state` OR `has_cron` is true (push-toggle.js requires data.js) |
 | `has_external_http` | Q5 includes `external-http` |
 | `pure_node_builtins` | `has_external_http` is false |
 | `has_multi_data_source` | Q5 selects 2+ data sources |
