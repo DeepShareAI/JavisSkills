@@ -49,16 +49,7 @@ After generation, the skill runs validation (frontmatter check, `node --check`, 
 
 ## Tests
 
-Golden-fixture regression tests live in `tests/golden/`. To run:
-
-```bash
-cd skills/skill-creator/tests/golden
-./run-golden.sh sample-daily
-./run-golden.sh manual-only-stateless
-./run-golden.sh multi-channel
-```
-
-Each fixture invokes the skill non-interactively via `claude -p` with the pre-recorded answers, then `diff -r`'s the output against `expected-bundle/`.
+No automated regression tests are bundled with this skill yet. Validate changes by running the skill in a fresh Claude Code session (`Use skill-creator to make a <slug> skill`) and inspecting the generated `./generated-skills/<slug>/` against expectations. The skill's own Phase 3 validation (frontmatter check + `node --check` + `--help` boot) runs on every invocation.
 
 ## See also
 
