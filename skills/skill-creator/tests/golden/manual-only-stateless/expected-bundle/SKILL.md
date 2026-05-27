@@ -31,6 +31,4 @@ node scripts/manual-only-stateless.js <userId>
 
 ## Notes
 
-- Data stored in `data/users/<userId>.json`.
 - Built-in Node modules only — no npm install needed.
-- User IDs only allow letters, digits, `-`, `_` (path-traversal guard in data.js).

@@ -9,9 +9,6 @@
  */
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
-
 if (process.argv.includes('--help')) {
   console.log('Usage: node manual-only-stateless.js <userId>');
   process.exit(0);

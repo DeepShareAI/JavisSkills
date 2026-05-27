@@ -155,9 +155,13 @@ Supported channels: {{channels_csv}}
 
 ## Notes
 
+{{#if needs_data}}
 - Data stored in `data/users/<userId>.json`{{#if has_external_http}}; external HTTP source configured separately{{/if}}.
+{{/if}}
 - {{#if pure_node_builtins}}Built-in Node modules only — no npm install needed.{{else}}Run `npm install` before first run.{{/if}}
+{{#if needs_data}}
 - User IDs only allow letters, digits, `-`, `_` (path-traversal guard in data.js).
+{{/if}}
 ```
 
 ## Generated file: `package.json`
@@ -196,9 +200,9 @@ Note: no `dependencies` block — Node 18+ provides `fetch`, `fs`, `path`, etc. 
  */
 'use strict';
 
-const fs = require('fs');
+{{#if needs_data}}const fs = require('fs');
 const path = require('path');
-{{#if needs_data}}const { sanitizeId, safeUserPath, readJson, writeJson } = require('./data');{{/if}}
+const { sanitizeId, safeUserPath, readJson, writeJson } = require('./data');{{/if}}
 {{#if has_external_http}}const https = require('https');{{/if}}
 
 if (process.argv.includes('--help')) {
