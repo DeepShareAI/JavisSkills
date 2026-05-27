@@ -1,7 +1,7 @@
 {
   "name": "javis-skills",
-  "version": "0.3.0",
-  "description": "Javis personal-plugin skills: local filesystem operations, content brainstorming for long-form writing, plus the javis-mcp remote connector (voice sessions, transcripts, summaries).",
+  "version": "0.4.0",
+  "description": "Javis personal-plugin skills: local filesystem operations, content brainstorming for long-form writing, HiJavis skill-creator (scaffolds new openclaw skills), plus the javis-mcp remote connector (voice sessions, transcripts, summaries).",
   "author": {
     "name": "Samuel Wei",
     "email": "samuel@deepshare.ai"
