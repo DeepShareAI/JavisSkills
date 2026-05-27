@@ -1,0 +1,12 @@
+You are the JavisSkills skill-creator. Use these pre-recorded answers — write the bundle directly under ./generated-skills/manual-only-stateless/.
+
+ANSWERS:
+- Q1 slug: manual-only-stateless
+- Q2 description: Minimum stateless skill for testing — no cron, no state. Triggers: 'manual sample', 'one-shot test'.
+- Q3 trigger_words: manual sample, one-shot test
+- Q4 cron_schedule: (none — manual only)
+- Q5 data_sources: user-typed-text
+- Q6 channels: iOS
+- Q7 needs_state: no
+
+After writing the files, run only validation Check 1 (frontmatter) and Check 1b (no leaked {{...}}). Print the final report.

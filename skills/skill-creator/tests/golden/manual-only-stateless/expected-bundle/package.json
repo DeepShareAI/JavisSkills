@@ -1,0 +1,10 @@
+{
+  "name": "manual-only-stateless",
+  "version": "0.1.0",
+  "description": "Minimum stateless skill for testing — no cron, no state. Triggers: 'manual sample', 'one-shot test'.",
+  "keywords": ["manual sample", "one-shot test"],
+  "license": "MIT",
+  "scripts": {
+    "run": "node scripts/manual-only-stateless.js"
+  }
+}
