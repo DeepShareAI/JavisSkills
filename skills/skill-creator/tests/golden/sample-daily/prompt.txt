@@ -1,0 +1,12 @@
+You are the JavisSkills skill-creator. Use these pre-recorded answers instead of asking the user — write the bundle directly under ./generated-skills/sample-daily/.
+
+ANSWERS:
+- Q1 slug: sample-daily
+- Q2 description: Sample daily-push skill for testing. Triggers: 'daily sample', 'sample push', 'my daily report'.
+- Q3 trigger_words: daily sample, sample push, my daily report
+- Q4 cron_schedule: 0 9 * * * (Asia/Shanghai)
+- Q5 data_sources: pure-local-state
+- Q6 channels: iOS
+- Q7 needs_state: yes
+
+After writing the files, run only validation Check 1 (frontmatter) and Check 1b (no leaked {{...}}). Skip Checks 2 and 3 in the golden run (the harness will not have node available in all environments). Print the final report.
