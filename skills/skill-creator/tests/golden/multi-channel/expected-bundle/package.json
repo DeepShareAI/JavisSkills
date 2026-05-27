@@ -1,0 +1,13 @@
+{
+  "name": "multi-channel",
+  "version": "0.1.0",
+  "description": "Multi-channel test skill — pushes to iOS, Telegram, and Discord. Triggers: 'multi push', 'broadcast test'.",
+  "keywords": ["multi push", "broadcast test"],
+  "license": "MIT",
+  "scripts": {
+    "run": "node scripts/multi-channel.js",
+    "push-on": "node scripts/push-toggle.js on",
+    "push-off": "node scripts/push-toggle.js off",
+    "push-status": "node scripts/push-toggle.js status"
+  }
+}
