@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Use when the user wants to create a new HiJavis (openclaw) skill that fires on a cron and pushes results back to their iOS chat. Walks through 7 questions, generates a periodic-push skill bundle under ./generated-skills/<slug>/, validates with lint + dry-run, and reports the exact clawhub publish commands. Triggers — "create a HiJavis skill", "scaffold a skill", "new openclaw skill", "skill-creator".
+description: Use when the user wants to create a new HiJavis (openclaw) skill that fires on a cron and pushes results back to their iOS chat. Walks through 7 questions, generates a periodic-push skill bundle under /Users/samuelwei/GoogleDrive/LLM/ClawSkills/<slug>/, validates with lint + dry-run, and reports the exact clawhub publish commands. Triggers — "create a HiJavis skill", "scaffold a skill", "new openclaw skill", "skill-creator".
 keywords: hijavis, openclaw, skill, scaffold, generator, periodic-push, cron, javis, clawhub
 ---
 
@@ -10,7 +10,7 @@ When the user asks to create a new HiJavis skill (one that runs in their per-use
 
 ## Pre-flight (do BEFORE asking any question)
 
-1. Confirm the working directory is OK to write `./generated-skills/<slug>/` into. If unclear, ask once.
+1. Confirm the target directory `/Users/samuelwei/GoogleDrive/LLM/ClawSkills/<slug>/` is OK to write into (overwrite if a folder at the slug already exists). If unclear, ask once. Note: this path is hardcoded — to redirect output elsewhere, the user must explicitly say so.
 2. Load `references/hijavis-loop-reference.md` into context. This is the source of truth for env vars and endpoints — do NOT skip.
 3. Load `references/periodic-push-template.md` into context. This holds the literal templates and the substitution-marker reference table.
 
@@ -53,7 +53,7 @@ Compute conditional flags from answers:
 
 Resolve every substitution marker (see the table at the top of `periodic-push-template.md`). For `{{step_1_*}}`, pick from the data-source step map: first selected source from Q5. When Q5 has 2+ sources, set `has_multi_data_source = true`, fill `{{step_2_*}}` from the second source, and any 3rd+ sources go into the SKILL.md "Notes" bullet. When Q5 has exactly 1 source, leave `{{step_2_*}}` unused (the template skips it via the conditional).
 
-Write files to `./generated-skills/<slug>/` via the Write tool. Generated set:
+Write files to `/Users/samuelwei/GoogleDrive/LLM/ClawSkills/<slug>/` via the Write tool. Generated set:
 
 | File | When |
 |---|---|
@@ -74,7 +74,7 @@ Run via Bash in this order; if a step fails, fix and retry once before reporting
 
 ```bash
 awk '/^---$/{c++} c==1 && /^name:/{n=1} c==1 && /^description:/{d=1} END{exit (n && d) ? 0 : 1}' \
-  ./generated-skills/<slug>/SKILL.md
+  /Users/samuelwei/GoogleDrive/LLM/ClawSkills/<slug>/SKILL.md
 ```
 
 Exit 0 = pass. Non-zero = re-emit SKILL.md and retry.
@@ -82,7 +82,7 @@ Exit 0 = pass. Non-zero = re-emit SKILL.md and retry.
 ### Check 1b: No unfilled `{{…}}` markers anywhere
 
 ```bash
-grep -rn '{{' ./generated-skills/<slug>/ && exit 1 || exit 0
+grep -rn '{{' /Users/samuelwei/GoogleDrive/LLM/ClawSkills/<slug>/ && exit 1 || exit 0
 ```
 
 Any match = a substitution was missed; identify the leak, fix, regenerate.
@@ -90,7 +90,7 @@ Any match = a substitution was missed; identify the leak, fix, regenerate.
 ### Check 2: `node --check` on every generated script
 
 ```bash
-find ./generated-skills/<slug>/scripts -name "*.js" -exec node --check {} \;
+find /Users/samuelwei/GoogleDrive/LLM/ClawSkills/<slug>/scripts -name "*.js" -exec node --check {} \;
 ```
 
 Any failure = syntax error in a template substitution. Fix the offending file.
@@ -98,7 +98,7 @@ Any failure = syntax error in a template substitution. Fix the offending file.
 ### Check 3: Entry script `--help` boots without throwing
 
 ```bash
-node ./generated-skills/<slug>/scripts/<slug_base>.js --help
+node /Users/samuelwei/GoogleDrive/LLM/ClawSkills/<slug>/scripts/<slug_base>.js --help
 ```
 
 Must exit 0 and print a usage line. Common failure: `require('./data')` when Q7 was no (mismatch in needs_data flag).
@@ -108,13 +108,13 @@ Must exit 0 and print a usage line. Common failure: `require('./data')` when Q7 
 After all four checks pass, output exactly this message (with placeholders filled):
 
 ```
-✅ Generated and validated: ./generated-skills/<slug>/
+✅ Generated and validated: /Users/samuelwei/GoogleDrive/LLM/ClawSkills/<slug>/
 
 Files created:
   <list each generated file>
 
 Next steps:
-  1) cd ./generated-skills/<slug>
+  1) cd /Users/samuelwei/GoogleDrive/LLM/ClawSkills/<slug>
   2) clawhub publish              # publishes to your private ClawHub registry
   3) On HiJavis iOS, in the agent chat, type one of: <trigger_words_csv>
      The skill appears in the Skills tab; tap to enable.

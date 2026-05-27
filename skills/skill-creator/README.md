@@ -10,14 +10,14 @@ In Claude Code (Code mode), say one of:
 - "Use skill-creator to make a daily news digest skill"
 - "/skill-creator"
 
-Claude loads `SKILL.md`, asks 7 questions one at a time, and writes the generated bundle to `./generated-skills/<slug>/` in your current working directory.
+Claude loads `SKILL.md`, asks 7 questions one at a time, and writes the generated bundle to `/Users/samuelwei/GoogleDrive/LLM/ClawSkills/<slug>/` (the personal ClawSkills registry directory; overwrites if the slug folder already exists).
 
 ## What it generates
 
 A periodic-push skill bundle:
 
 ```
-./generated-skills/<slug>/
+/Users/samuelwei/GoogleDrive/LLM/ClawSkills/<slug>/
 ├── SKILL.md             # ready for HiJavis (openclaw) to load
 ├── package.json
 └── scripts/
@@ -49,7 +49,7 @@ After generation, the skill runs validation (frontmatter check, `node --check`, 
 
 ## Tests
 
-No automated regression tests are bundled with this skill yet. Validate changes by running the skill in a fresh Claude Code session (`Use skill-creator to make a <slug> skill`) and inspecting the generated `./generated-skills/<slug>/` against expectations. The skill's own Phase 3 validation (frontmatter check + `node --check` + `--help` boot) runs on every invocation.
+No automated regression tests are bundled with this skill yet. Validate changes by running the skill in a fresh Claude Code session (`Use skill-creator to make a <slug> skill`) and inspecting the generated `/Users/samuelwei/GoogleDrive/LLM/ClawSkills/<slug>/` against expectations. The skill's own Phase 3 validation (frontmatter check + `node --check` + `--help` boot) runs on every invocation.
 
 ## See also
 
