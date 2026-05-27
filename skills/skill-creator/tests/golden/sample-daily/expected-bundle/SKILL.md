@@ -36,8 +36,8 @@ node scripts/push-toggle.js status <userId>
 ## Workflow
 
 1. Read the user's state from data/users/<userId>.json.
-2. Read the user's state from data/users/<userId>.json.
-3. Format output and POST to `http://javis-server:8000/api/agent/push` with `{"skill": "sample-daily", "content": "<formatted>"}` using `OPENCLAW_GATEWAY_TOKEN` for auth.
+
+2. Format output and POST to `http://javis-server:8000/api/agent/push` with `{"skill": "sample-daily", "content": "<formatted>"}` using `OPENCLAW_GATEWAY_TOKEN` for auth.
 
 ## Push setup (cron registration)
 

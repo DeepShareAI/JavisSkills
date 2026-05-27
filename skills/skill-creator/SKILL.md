@@ -49,8 +49,9 @@ Compute conditional flags from answers:
 - `needs_data` = Q7 yes OR Q5 includes `pure-local-state`
 - `has_external_http` = Q5 includes `external-http`
 - `pure_node_builtins` = NOT `has_external_http`
+- `has_multi_data_source` = Q5 has 2 or more selected sources
 
-Resolve every substitution marker (see the table at the top of `periodic-push-template.md`). For `{{step_1_*}}` and `{{step_2_*}}`, pick from the data-source step map: first selected source from Q5 → step 1, second → step 2 (remaining sources go into the SKILL.md "Notes" bullet).
+Resolve every substitution marker (see the table at the top of `periodic-push-template.md`). For `{{step_1_*}}`, pick from the data-source step map: first selected source from Q5. When Q5 has 2+ sources, set `has_multi_data_source = true`, fill `{{step_2_*}}` from the second source, and any 3rd+ sources go into the SKILL.md "Notes" bullet. When Q5 has exactly 1 source, leave `{{step_2_*}}` unused (the template skips it via the conditional).
 
 Write files to `./generated-skills/<slug>/` via the Write tool. Generated set:
 

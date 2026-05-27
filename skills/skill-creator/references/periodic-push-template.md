@@ -33,6 +33,7 @@ This document defines the literal text of every file generated for a periodic-pu
 | `needs_data` | Q7 = yes OR Q5 includes `pure-local-state` |
 | `has_external_http` | Q5 includes `external-http` |
 | `pure_node_builtins` | `has_external_http` is false |
+| `has_multi_data_source` | Q5 selects 2+ data sources |
 
 ## Data-source step map (Q5 → step text + code)
 
@@ -116,8 +117,13 @@ node scripts/push-toggle.js status <userId>
 ## Workflow
 
 1. {{step_1_from_data_sources}}
+{{#if has_multi_data_source}}
 2. {{step_2_from_data_sources}}
 3. Format output and POST to `http://javis-server:8000/api/agent/push` with `{"skill": "{{slug}}", "content": "<formatted>"}` using `OPENCLAW_GATEWAY_TOKEN` for auth.
+{{/if}}
+{{#if !has_multi_data_source}}
+2. Format output and POST to `http://javis-server:8000/api/agent/push` with `{"skill": "{{slug}}", "content": "<formatted>"}` using `OPENCLAW_GATEWAY_TOKEN` for auth.
+{{/if}}
 
 {{#if has_cron}}
 ## Push setup (cron registration)
@@ -204,7 +210,7 @@ const userId = {{#if needs_data}}sanitizeId(process.argv[2]){{else}}process.argv
 
 async function main() {
   {{step_1_code_block}}
-  {{step_2_code_block}}
+  {{#if has_multi_data_source}}{{step_2_code_block}}{{/if}}
   console.log(output);
 }
 
