@@ -151,9 +151,27 @@ node ${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/scripts/<slug_base>.js --h
 
 Must exit 0 and print a usage line. Common failure: `require('./data')` when Q7 was no (mismatch in needs_data flag).
 
+### Check 4: No invalid openclaw cron flags leaked
+
+`--help` and `node --check` do NOT exercise the cron-registration text or `main()`, so these regression guards catch the two bugs that slip past them.
+
+```bash
+grep -rn -- "--schedule\|--command" ${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/ && exit 1 || exit 0
+```
+
+Any match = an invalid openclaw flag. The real flags are `--cron` (crontab expr) / `--every` (duration) and `--message` (agent payload) — never `--schedule`/`--command`. Fix and regenerate.
+
+### Check 5: Entry script defines `output` (no undefined-variable crash at runtime)
+
+```bash
+grep -q "const output" ${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/scripts/<slug_base>.js && echo ok || exit 1
+```
+
+Must print `ok`. The entry script's `main()` builds `output` from the `parts` array the data-source block(s) fill; a missing assignment means `console.log(output)` throws `ReferenceError` only when the cron actually runs (never during `--help`).
+
 ## Phase 4 — Report
 
-After all four checks pass, output exactly this message (with placeholders filled):
+After all checks pass, output exactly this message (with placeholders filled):
 
 ```
 ✅ Generated and validated: ${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/

@@ -43,15 +43,17 @@ To create a recurring trigger:
 ```bash
 openclaw cron add \
   --name "<slug>-<userId>" \
-  --schedule "<crontab>" \
+  --cron "<crontab>" \
   --tz "<IANA-tz>" \
   --channel <telegram|discord|slack|feishu> \
   --to "<channel-target-id>" \
   --session isolated \
-  --command "<natural-language command the LLM will execute on trigger>"
+  --message "<natural-language message the agent will act on at trigger time>"
 ```
 
-The `--command` value is fed to openclaw's LLM at trigger time. Pattern for a push skill:
+Flags (from openclaw `src/cli/cron-cli/register.cron-add.ts`): use `--cron "<5/6-field expr>"` for a crontab schedule (or `--every <duration>` like `10m`/`1h`, or `--at <when>` for one-shot). The agent payload is `--message` (isolated `agentTurn`) or `--system-event` (main session) — these two are mutually exclusive. There is no `--schedule` or `--command` flag.
+
+The `--message` value is fed to openclaw's agent at trigger time. Pattern for a push skill:
 
 ```
 Run /<slug>: execute node scripts/<entry>.js <userId>, format output nicely. Then POST to

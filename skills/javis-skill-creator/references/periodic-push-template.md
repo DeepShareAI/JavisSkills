@@ -39,21 +39,35 @@ This document defines the literal text of every file generated for a periodic-pu
 
 When Q5 includes multiple sources, prepend each block to the workflow in this order: `transcripts` → `external-http` → `pure-local-state` → `user-typed-text`. Use up to 2 steps in the SKILL.md workflow; the remaining sources go into a "Notes" bullet.
 
+Every code block reads its raw input and then pushes a string onto the shared `parts`
+array that `main()` declares (see the entry-script template). `main()` joins `parts`
+into the `output` that gets pushed to iOS — so a generated script always produces
+`output` and never throws `ReferenceError`. Replace the `// TODO: format` lines with
+real extraction/formatting for the skill.
+
 ### `transcripts`
 - step text: `Fetch recent transcripts via the LLM's javis_mcp tools (get_transcript_tool / search_transcripts_tool) and pass the relevant text to this script on stdin.`
 - code block:
   ```js
   let transcriptText = '';
   for await (const chunk of process.stdin) transcriptText += chunk;
+  // TODO: format `transcriptText` into the content you want pushed.
+  parts.push(transcriptText.trim());
   ```
 
 ### `external-http`
 - step text: `Fetch from the configured HTTP endpoint (set HTTP_SOURCE_URL env var when registering the cron).`
 - code block:
   ```js
-  const res = await fetch(process.env.HTTP_SOURCE_URL);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const sourceUrl = process.env.HTTP_SOURCE_URL;
+  if (!sourceUrl) {
+    throw new Error('HTTP_SOURCE_URL env var is not set — configure it when registering the cron job.');
+  }
+  const res = await fetch(sourceUrl);
+  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${sourceUrl}`);
   const data = await res.json();
+  // TODO: extract the fields you need from `data` and format them.
+  parts.push(JSON.stringify(data, null, 2));
   ```
 
 ### `pure-local-state`
@@ -63,6 +77,8 @@ When Q5 includes multiple sources, prepend each block to the workflow in this or
   const userState = fs.existsSync(safeUserPath(userId))
     ? readJson(safeUserPath(userId))
     : {};
+  // TODO: format `userState` into the content you want pushed.
+  parts.push(JSON.stringify(userState, null, 2));
   ```
 
 ### `user-typed-text`
@@ -70,6 +86,8 @@ When Q5 includes multiple sources, prepend each block to the workflow in this or
 - code block:
   ```js
   const text = process.argv.slice(3).join(' ');
+  // TODO: process `text` into the content you want pushed.
+  parts.push(text);
   ```
 
 ---
@@ -139,12 +157,12 @@ node scripts/push-toggle.js on <userId> --time <HH:MM> --channel <channel>
 ```bash
 openclaw cron add \
   --name "{{slug}}-<userId>" \
-  --schedule "{{cron_crontab}}" \
+  --cron "{{cron_crontab}}" \
   --tz "{{cron_tz}}" \
   --channel <channel> \
   --to "<channel-target-id>" \
   --session isolated \
-  --command "Run /{{slug}}: execute node scripts/{{slug_base}}.js <userId>, format output nicely. Then POST to http://javis-server:8000/api/agent/push with JSON body {\"skill\": \"{{slug}}\", \"content\": \"<formatted output>\"} using the gateway bearer token for auth."
+  --message "Run /{{slug}}: execute node scripts/{{slug_base}}.js <userId>, format output nicely. Then POST to http://javis-server:8000/api/agent/push with JSON body {\"skill\": \"{{slug}}\", \"content\": \"<formatted output>\"} using the gateway bearer token for auth."
 ```
 
 ### Step 3: Confirm to user
@@ -203,7 +221,6 @@ Note: no `dependencies` block — Node 18+ provides `fetch`, `fs`, `path`, etc. 
 {{#if needs_data}}const fs = require('fs');
 const path = require('path');
 const { sanitizeId, safeUserPath, readJson, writeJson } = require('./data');{{/if}}
-{{#if has_external_http}}const https = require('https');{{/if}}
 
 if (process.argv.includes('--help')) {
   console.log('Usage: node {{slug_base}}.js <userId>');
@@ -213,8 +230,13 @@ if (process.argv.includes('--help')) {
 const userId = {{#if needs_data}}sanitizeId(process.argv[2]){{else}}process.argv[2] || 'default'{{/if}};
 
 async function main() {
+  const parts = [];
   {{step_1_code_block}}
   {{#if has_multi_data_source}}{{step_2_code_block}}{{/if}}
+
+  // `parts` is filled by the data-source block(s) above. Replace the TODO lines
+  // there (and this join, if needed) with the real formatting for your push.
+  const output = parts.filter(Boolean).join('\n\n') || '(no content)';
   console.log(output);
 }
 
@@ -268,7 +290,7 @@ if (cmd === 'on') {
   savePrefs(prefs);
   console.log(`✅ ${SLUG} push enabled: ${time} via ${channel}`);
   console.log(`Cron name to register: ${cronName}`);
-  console.log(`Run: openclaw cron add --name "${cronName}" --schedule "<MM HH * * *>" --tz "<tz>" --channel ${channel} --to "<channel-target-id>" --session isolated --command "..."`);
+  console.log(`Run: openclaw cron add --name "${cronName}" --cron "<MM HH * * *>" --tz "<tz>" --channel ${channel} --to "<channel-target-id>" --session isolated --message "..."`);
 } else if (cmd === 'off') {
   if (fs.existsSync(prefsPath)) fs.unlinkSync(prefsPath);
   try { execSync(`openclaw cron remove --name "${cronName}"`); } catch (_) {}
