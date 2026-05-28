@@ -1,4 +1,4 @@
-# HiJavis Loop Reference (for skill-creator)
+# HiJavis Loop Reference (for javis-skill-creator)
 
 This document is the source of truth for the values Claude must use when generating a HiJavis-deployable periodic-push skill. Treat it as authoritative — do not infer endpoint paths or env var names from memory.
 
