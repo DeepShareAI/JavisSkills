@@ -1,8 +1,7 @@
+#!/usr/bin/env node
 // Source: /home/workspace/openclaw-users/user_31VcZbTLe6NApS2tqghvxE5FnQR/workspace/skills/english-daily/scripts/daily-push.js
 // Pulled: 2026-05-26
 // Pinned exemplar — see references/examples/english-daily-skill-md.md note.
-
-#!/usr/bin/env node
 /**
  * english-daily — 每日学习推送 prompt 生成器
  *

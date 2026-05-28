@@ -8,23 +8,54 @@ keywords: hijavis, openclaw, skill, scaffold, generator, periodic-push, cron, ja
 
 When the user asks to create a new HiJavis skill (one that runs in their per-user openclaw container, optionally on a cron, and pushes content to their iOS chat), follow this skill exactly.
 
+**Hard rule — loop conformance.** Every skill this generator produces, whether invoked from the Claude desktop app or Claude Code, MUST conform to the HiJavis loop (iOS ↔ javis-server ↔ per-user openclaw container ↔ workspace skills ↔ cron ↔ channels + push → iOS Socket.IO). The Phase 0 feasibility gate below is mandatory and runs BEFORE the 7 questions — never skip it.
+
 ## Pre-flight (do BEFORE asking any question)
 
-1. **Resolve the output directory.** Run this in Bash to compute the absolute target path:
+1. **Detect the runtime.** Try to run a trivial Bash command (e.g. `echo ok`). If it succeeds, set `has_shell = true` (Claude Code / terminal-enabled). If no Bash tool is available (e.g. Claude desktop app), set `has_shell = false`. `has_shell` controls Phase 3 validation and Phase 4 wording.
 
-   ```bash
-   OUTPUT_BASE="${JAVIS_SKILL_BASE_DIR:-$HOME}"
-   OUTPUT_DIR="$OUTPUT_BASE/ClawSkills/<slug>"
-   echo "Will write to: $OUTPUT_DIR"
-   ```
+2. **Resolve the output directory.**
+   - If `has_shell`: run
+     ```bash
+     OUTPUT_BASE="${JAVIS_SKILL_BASE_DIR:-$HOME}"
+     OUTPUT_DIR="$OUTPUT_BASE/ClawSkills/<slug>"
+     echo "Will write to: $OUTPUT_DIR"
+     ```
+   - If NOT `has_shell`: you cannot expand env vars. Default `OUTPUT_BASE` to `$HOME`'s ClawSkills parent, state the assumed path explicitly, and ask the user to confirm or supply an absolute output path before writing.
 
    - If `JAVIS_SKILL_BASE_DIR` is set in the user's shell, that's their personal skill-registry parent (e.g., the maintainer uses `/Users/samuelwei/GoogleDrive/LLM`). Otherwise it falls back to `$HOME`.
    - If `$OUTPUT_BASE/ClawSkills/` does not exist, tell the user (they may want to `mkdir -p` it, or set `JAVIS_SKILL_BASE_DIR` first to point at a different location).
    - If `$OUTPUT_DIR` itself already exists, ask once before overwriting.
 
    Use the resolved `$OUTPUT_DIR` (or its literal expansion) for all subsequent file writes and validation commands in Phases 2-4.
-2. Load `references/hijavis-loop-reference.md` into context. This is the source of truth for env vars and endpoints — do NOT skip.
-3. Load `references/periodic-push-template.md` into context. This holds the literal templates and the substitution-marker reference table.
+3. Load `references/hijavis-loop-reference.md` into context. Source of truth for env vars and endpoints — do NOT skip.
+4. Load `references/architecture-capabilities.md` into context. The authoritative SUPPORTED / NOT-SUPPORTED matrix the Phase 0 gate consults — do NOT skip.
+5. Load `references/periodic-push-template.md` into context. Literal templates + substitution-marker table.
+
+## Phase 0 — Intent & Feasibility gate (mandatory, before any of the 7 questions)
+
+1. **Ask one open question (Q0):** "In a sentence or two — what should this skill do? What triggers it, what does it produce, and where should the result go?"
+
+2. **Classify the requirements** against `references/architecture-capabilities.md`. For each thing the user wants, find the matching SUPPORTED or NOT-SUPPORTED line.
+
+3. **Emit a Loop Conformance Check** in this exact shape:
+
+   ```
+   Loop Conformance Check
+   ✅ Supported:
+     - <requirement> → <how the loop does it>
+   ⚠️ Not supported by the current architecture:
+     - <requirement> — <reason, citing the loop> → workaround: <from the capabilities ref>
+   ```
+
+   If everything is ✅, say so and continue to Phase 1.
+
+4. **If any ⚠️:** propose the degraded build — the supported subset plus the chosen workarounds — and ask: "Proceed with this supported version? (yes / revise / cancel)".
+   - **yes** → carry the degraded intent into Phase 1.
+   - **revise** → re-ask Q0 and re-run this gate.
+   - **cancel** → stop the turn; do not scaffold.
+
+5. **Carry forward** the confirmed intent so every Phase 1 answer and the generated bundle stay loop-conformant. Do NOT generate anything that depends on a ⚠️ capability the user did not accept a workaround for.
 
 ## Phase 1 — Ask the 7 questions (one at a time, use AskUserQuestion where multi-choice fits)
 
@@ -80,7 +111,12 @@ Do NOT scaffold a `data/` directory — the generated scripts create it on first
 
 ## Phase 3 — Validate
 
-Run via Bash in this order; if a step fails, fix and retry once before reporting:
+**If `has_shell` is false (e.g. Claude desktop app): SKIP all of Phase 3.** You cannot run shell validation. Instead, after generating, tell the user verbatim:
+
+> ⚠️ Skipped validation (no shell in this environment). Before publishing, run these in Claude Code or a terminal from the skill folder:
+> `node --check scripts/*.js` and `node scripts/<slug_base>.js --help`
+
+**If `has_shell` is true:** run the checks below via Bash in order; if a step fails, fix and retry once before reporting.
 
 ### Check 1: SKILL.md frontmatter present and non-empty
 
@@ -138,6 +174,8 @@ If you want to install directly without publishing (testing only):
 ```
 
 Do not run `clawhub publish` yourself — leave that to the user (it's a stateful registry action).
+
+When `has_shell` was false, prefix the report with the skipped-validation warning from Phase 3, and change the first line from "✅ Generated and validated:" to "✅ Generated (validation skipped — see warning above):".
 
 ## What to do if the user message does NOT request a new skill
 

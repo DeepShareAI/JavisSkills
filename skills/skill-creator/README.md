@@ -14,6 +14,22 @@ Claude loads `SKILL.md`, asks 7 questions one at a time, and writes the generate
 
 > Example: with `export JAVIS_SKILL_BASE_DIR=/Users/samuelwei/GoogleDrive/LLM` in `~/.zshrc`, a slug `daily-news` lands at `/Users/samuelwei/GoogleDrive/LLM/ClawSkills/daily-news/`. Without the env var set, it lands at `~/ClawSkills/daily-news/`.
 
+## Feasibility gate (Phase 0)
+
+Before the 7 questions, skill-creator asks what you want the skill to do and checks it
+against the HiJavis architecture (`references/architecture-capabilities.md`). If a
+requirement isn't supported — e.g. inbound webhooks, video/media push, or alerts while
+the iOS app is closed — it tells you why (citing the loop), suggests a workaround, and
+offers to build the supported version. Every generated skill is guaranteed to conform
+to the loop.
+
+## Running on Claude Desktop vs Claude Code
+
+In Claude Code (shell available) the full flow runs, including `node --check` and
+`--help` validation. On the Claude desktop app (no shell) skill-creator still runs the
+feasibility gate, asks the questions, and writes the bundle, but skips the Bash-only
+validation and tells you the exact commands to run later in a terminal.
+
 ## What it generates
 
 A periodic-push skill bundle:
