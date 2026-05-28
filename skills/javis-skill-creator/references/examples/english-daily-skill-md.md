@@ -74,7 +74,7 @@ node scripts/push-toggle.js on <userId> --morning <HH:MM> --channel <channel>
 
 ### Step 2: Create cron job via openclaw CLI
 ```bash
-openclaw cron add   --name "english-daily-<userId>"   --schedule "<MM> <HH> * * *"   --tz "Asia/Shanghai"   --channel <channel>   --to "<channel-target-id>"   --session isolated   --command "Run /english-daily: execute node scripts/daily-push.js <userId>, format output nicely. Then POST to http://javis-server:8000/api/agent/push with JSON body {"skill": "english-daily", "content": "<formatted output>"} using the gateway bearer token for auth."
+openclaw cron add   --name "english-daily-<userId>"   --cron "<MM> <HH> * * *"   --tz "Asia/Shanghai"   --channel <channel>   --to "<channel-target-id>"   --session isolated   --message "Run /english-daily: execute node scripts/daily-push.js <userId>, format output nicely. Then POST to http://javis-server:8000/api/agent/push with JSON body {"skill": "english-daily", "content": "<formatted output>"} using the gateway bearer token for auth."
 ```
 
 ### Step 3: Confirm to user
