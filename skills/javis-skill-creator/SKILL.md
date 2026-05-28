@@ -1,6 +1,6 @@
 ---
-name: skill-creator
-description: Use when the user wants to create a new HiJavis (openclaw) skill that fires on a cron and pushes results back to their iOS chat. Walks through 7 questions, generates a periodic-push skill bundle under ${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/, validates with lint + dry-run, and reports the exact clawhub publish commands. Triggers — "create a HiJavis skill", "scaffold a skill", "new openclaw skill", "skill-creator".
+name: javis-skill-creator
+description: Use when the user wants to create a new HiJavis (openclaw) skill that fires on a cron and pushes results back to their iOS chat. Walks through 7 questions, generates a periodic-push skill bundle under ${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/, validates with lint + dry-run, and reports the exact clawhub publish commands. Triggers — "create a HiJavis skill", "scaffold a skill", "new openclaw skill", "javis-skill-creator".
 keywords: hijavis, openclaw, skill, scaffold, generator, periodic-push, cron, javis, clawhub
 ---
 

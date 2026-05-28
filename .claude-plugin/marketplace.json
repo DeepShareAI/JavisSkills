@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "javis-skills",
-      "description": "Javis personal-plugin skills: local filesystem operations, content brainstorming for long-form writing, HiJavis skill-creator (scaffolds new openclaw skills), plus the javis-mcp remote connector (voice sessions, transcripts, summaries).",
+      "description": "Javis personal-plugin skills: local filesystem operations, content brainstorming for long-form writing, javis-skill-creator (scaffolds new HiJavis/openclaw skills), plus the javis-mcp remote connector (voice sessions, transcripts, summaries).",
       "version": "0.4.2",
       "source": "./",
       "author": {

@@ -1,4 +1,4 @@
-# skill-creator
+# javis-skill-creator
 
 A JavisSkills component. Scaffolds new HiJavis-deployable (openclaw) skills that follow the periodic-push loop: cron trigger → Node script → POST `/api/agent/push` → Socket.IO → iOS chat.
 
@@ -7,8 +7,8 @@ A JavisSkills component. Scaffolds new HiJavis-deployable (openclaw) skills that
 In Claude Code (Code mode), say one of:
 - "Create a HiJavis skill"
 - "Scaffold a new openclaw skill"
-- "Use skill-creator to make a daily news digest skill"
-- "/skill-creator"
+- "Use javis-skill-creator to make a daily news digest skill"
+- "/javis-skill-creator"
 
 Claude loads `SKILL.md`, asks 7 questions one at a time, and writes the generated bundle to `${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/` — that is, your personal ClawSkills registry parent directory (set `JAVIS_SKILL_BASE_DIR` in your shell rc; defaults to `$HOME`). Overwrites if the slug folder already exists.
 
@@ -16,7 +16,7 @@ Claude loads `SKILL.md`, asks 7 questions one at a time, and writes the generate
 
 ## Feasibility gate (Phase 0)
 
-Before the 7 questions, skill-creator asks what you want the skill to do and checks it
+Before the 7 questions, javis-skill-creator asks what you want the skill to do and checks it
 against the HiJavis architecture (`references/architecture-capabilities.md`). If a
 requirement isn't supported — e.g. inbound webhooks, video/media push, or alerts while
 the iOS app is closed — it tells you why (citing the loop), suggests a workaround, and
@@ -26,7 +26,7 @@ to the loop.
 ## Running on Claude Desktop vs Claude Code
 
 In Claude Code (shell available) the full flow runs, including `node --check` and
-`--help` validation. On the Claude desktop app (no shell) skill-creator still runs the
+`--help` validation. On the Claude desktop app (no shell) javis-skill-creator still runs the
 feasibility gate, asks the questions, and writes the bundle, but skips the Bash-only
 validation and tells you the exact commands to run later in a terminal.
 
@@ -67,7 +67,7 @@ After generation, the skill runs validation (frontmatter check, `node --check`, 
 
 ## Tests
 
-No automated regression tests are bundled with this skill yet. Validate changes by running the skill in a fresh Claude Code session (`Use skill-creator to make a <slug> skill`) and inspecting the generated `${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/` against expectations. The skill's own Phase 3 validation (frontmatter check + `node --check` + `--help` boot) runs on every invocation.
+No automated regression tests are bundled with this skill yet. Validate changes by running the skill in a fresh Claude Code session (`Use javis-skill-creator to make a <slug> skill`) and inspecting the generated `${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/` against expectations. The skill's own Phase 3 validation (frontmatter check + `node --check` + `--help` boot) runs on every invocation.
 
 ## See also
 
