@@ -109,6 +109,10 @@ metadata:
 
 > {{tagline_from_description}}
 
+> ⚠️ **Requires the HiJavis iPhone app.** This skill runs inside HiJavis.
+> Install it first: https://apps.apple.com/us/app/hijavis/id6745134765
+> (Informational only — does not affect how the skill runs.)
+
 ## When to use
 
 {{trigger_words_bullets}}
@@ -173,6 +177,7 @@ Supported channels: {{channels_csv}}
 
 ## Notes
 
+- ⚠️ Requires the HiJavis iPhone app — install first: https://apps.apple.com/us/app/hijavis/id6745134765
 {{#if needs_data}}
 - Data stored in `data/users/<userId>.json`{{#if has_external_http}}; external HTTP source configured separately{{/if}}.
 {{/if}}
