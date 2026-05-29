@@ -23,6 +23,10 @@ This document defines the literal text of every file generated for a periodic-pu
 | `{{step_2_from_data_sources}}` | Q5 | text |
 | `{{step_1_code_block}}` | Q5 | code — see map |
 | `{{step_2_code_block}}` | Q5 | code |
+| `{{readme_hook}}` | LLM-authored from Q1/Q2 | 1–2 warm sentences saying what the skill does for the user (README only) |
+| `{{readme_scenarios_bullets}}` | LLM-authored from Q1/Q2/Q5 | 3–5 "Picture this" everyday-moment bullets, specific to this skill (README only) |
+| `{{readme_what_it_does}}` | LLM-authored from Q2/Q5 | 1–2 plain-language paragraphs, no jargon (README only) |
+| `{{readme_value_bullets}}` | LLM-authored | 2–4 "what makes it handy" benefit bullets (README only) |
 
 ## Conditional block flags
 
@@ -109,10 +113,6 @@ metadata:
 
 > {{tagline_from_description}}
 
-> ⚠️ **Requires the HiJavis iPhone app.** This skill runs inside HiJavis.
-> Install it first: https://apps.apple.com/us/app/hijavis/id6745134765
-> (Informational only — does not affect how the skill runs.)
-
 ## When to use
 
 {{trigger_words_bullets}}
@@ -177,7 +177,6 @@ Supported channels: {{channels_csv}}
 
 ## Notes
 
-- ⚠️ Requires the HiJavis iPhone app — install first: https://apps.apple.com/us/app/hijavis/id6745134765
 {{#if needs_data}}
 - Data stored in `data/users/<userId>.json`{{#if has_external_http}}; external HTTP source configured separately{{/if}}.
 {{/if}}
@@ -185,6 +184,60 @@ Supported channels: {{channels_csv}}
 {{#if needs_data}}
 - User IDs only allow letters, digits, `-`, `_` (path-traversal guard in data.js).
 {{/if}}
+```
+
+## Generated file: `README.md`
+
+This is the **user-facing** doc — the thing a person reads in the app/store before they tap to enable the skill. openclaw does NOT load it into the agent's runtime context, so the install notice lives here (not in `SKILL.md`) to keep it out of the agent's prompt at run time.
+
+**Tone & authoring rules (important — do not emit a bare skeleton):**
+- Write for a non-technical end user. NO endpoints, env vars, flags, `node` commands, or file paths. (Those belong in `SKILL.md`.)
+- Warm, plain language — second person ("you"), concrete everyday moments. The calendar-extractor README is the gold-standard model: a "Picture this" hook list, a plain "What it does", "How to use it", "What makes it handy", and a "Good to know" caveat.
+- The `{{readme_*}}` markers below are **LLM-authored prose** you write from the skill's actual purpose (Q1/Q2/Q5) — NOT literal substitutions. Make them specific to THIS skill, not generic filler. Aim for 3–5 scenario bullets and 2–4 value bullets.
+- Keep the literal parts verbatim: the install notice, the trigger-word list, and the "Good to know" app-open caveat (every periodic-push skill delivers over WebSocket, so the keep-app-open note always applies).
+
+```markdown
+# {{TitleCaseSlug}}
+
+> ⚠️ **Requires the HiJavis iPhone app.** This skill runs inside HiJavis — install the app first, then it's ready to use.
+> 📲 https://apps.apple.com/us/app/hijavis/id6745134765
+
+{{readme_hook}}
+
+## Picture this
+
+{{readme_scenarios_bullets}}
+
+If any of those sound like you, this one's for you.
+
+## What it does
+
+{{readme_what_it_does}}
+
+## How to use it
+
+### Just ask
+
+Open your HiJavis chat and ask. Any of these works:
+
+{{trigger_words_bullets}}
+
+HiJavis runs it and replies in seconds. Nothing to set up first.
+{{#if has_cron}}
+### Get it on a schedule
+
+Want it to come to you automatically? Ask HiJavis to send it on a schedule — for
+example, "send me {{slug}} every morning at 7." It'll start arriving on its own.
+{{/if}}
+## What makes it handy
+
+{{readme_value_bullets}}
+
+## Good to know
+
+For scheduled updates to arrive on time, keep the HiJavis app open and running. If
+it's fully closed, an update may wait until you reopen the app. Asking on the spot
+works anytime.
 ```
 
 ## Generated file: `package.json`

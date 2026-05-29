@@ -101,6 +101,7 @@ Write files to `${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/` via the Write
 | File | When |
 |---|---|
 | `SKILL.md` | always |
+| `README.md` | always (human-facing docs + HiJavis install notice; not loaded into agent runtime context) |
 | `package.json` | always |
 | `scripts/<slug_base>.js` | always |
 | `scripts/push-toggle.js` | only if `has_cron` |
