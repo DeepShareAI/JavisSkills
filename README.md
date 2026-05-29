@@ -2,7 +2,7 @@
 
 A personal-plugin bundle for the Javis ecosystem.
 
-**Latest release: [v0.4.2.2](https://github.com/DeepShareAI/JavisSkills/releases/tag/v0.4.2.2)** — fixes `javis-skill-creator`'s periodic-push template (correct openclaw cron flags, a runnable `output` contract, and a guarded HTTP source) so generated skills work out of the box. `javis-skill-creator` (renamed from `skill-creator`) enforces HiJavis loop-conformance and runs a Phase 0 feasibility gate: it checks each request against the live architecture (`references/architecture-capabilities.md`) and, when something isn't supported, explains why and offers a degraded build. Works on both Claude Desktop and Claude Code.
+**Latest release: [v0.4.2.3](https://github.com/DeepShareAI/JavisSkills/releases/tag/v0.4.2.3)** — every skill `javis-skill-creator` scaffolds now carries a HiJavis-app install notice (a top-of-`SKILL.md` callout plus a Notes bullet linking to the App Store) so users know the skill runs inside the [HiJavis iPhone app](https://apps.apple.com/us/app/hijavis/id6745134765); the notice is informational only and does not affect skill runtime. Previously ([v0.4.2.2](https://github.com/DeepShareAI/JavisSkills/releases/tag/v0.4.2.2)): fixed the periodic-push template (correct openclaw cron flags, a runnable `output` contract, and a guarded HTTP source) so generated skills work out of the box. `javis-skill-creator` (renamed from `skill-creator`) enforces HiJavis loop-conformance and runs a Phase 0 feasibility gate: it checks each request against the live architecture (`references/architecture-capabilities.md`) and, when something isn't supported, explains why and offers a degraded build. Works on both Claude Desktop and Claude Code.
 
 ## Components
 
