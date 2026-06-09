@@ -1,0 +1,12 @@
+{
+  "name": "{{slug}}",
+  "version": "0.1.0",
+  "description": "{{description}}",
+  "keywords": [{{keywords_json}}],
+  "license": "MIT",
+  "scripts": {
+    "{{verb}}": "node scripts/{{slug}}.js {{verb}}",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=18" }
+}
