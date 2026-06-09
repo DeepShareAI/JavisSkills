@@ -1,0 +1,29 @@
+[
+  {
+    "title": "Lunch with Dana",
+    "start_at": "2026-06-09T19:00:00.000Z",
+    "end_at": "2026-06-09T20:00:00.000Z",
+    "location": "Cafe Verde, Mission St",
+    "attendees": ["Dana"],
+    "notes": "Discuss Q3 roadmap",
+    "source_ref": "sess-canned-1"
+  },
+  {
+    "title": "Dentist appointment",
+    "start_at": "2026-06-12T22:00:00.000Z",
+    "end_at": "2026-06-12T22:45:00.000Z",
+    "location": "Bright Smiles Dental",
+    "attendees": [],
+    "notes": "Cleaning + checkup",
+    "source_ref": "sess-canned-1"
+  },
+  {
+    "title": "Team standup",
+    "start_at": "2026-06-10T16:30:00.000Z",
+    "end_at": "2026-06-10T16:45:00.000Z",
+    "location": null,
+    "attendees": ["eng-team"],
+    "notes": null,
+    "source_ref": "sess-canned-1"
+  }
+]
