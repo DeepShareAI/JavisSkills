@@ -25,6 +25,14 @@ wire field `dedup_key`; when present and no explicit `session_id` is given, the 
 card's derived per-card session. This skill-side change makes generated skills pass that field so
 they light up the new server behavior.
 
+## Release
+
+This ships as plugin **`javis-skills` 0.5.0** (`.claude-plugin/plugin.json`, `0.4.4 → 0.5.0`).
+The two version numbers stay deliberately distinct: the **plugin package** version (`0.5.0`)
+tracks marketplace releases, while the **contract spine** version (`CONTRACT_VERSION 1.1.0`)
+tracks the openclaw → javis-server wire contract and changes only when that boundary changes.
+This release bump exists to publish the contract change.
+
 ## Changes
 
 - **`references/javis-contract.js`** (and its byte-identical vendored twin
