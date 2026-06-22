@@ -1,9 +1,9 @@
 ---
-name: content-brainstorming
+name: javis-brainstorming
 description: Use before writing any report, article, news piece, blog post, or similar long-form content. Asks intent questions one at a time using a strict open → multiple-choice refinement loop, inventories source materials (Javis transcripts, files, images), and produces a structured brief saved to briefs/. Does NOT draft prose.
 ---
 
-# Content Brainstorming
+# Javis Brainstorming
 
 Turn a vague writing request into a structured brief that captures intent, source materials, angle, and outline — ready for a separate drafting step.
 
