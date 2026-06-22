@@ -3,7 +3,7 @@
  * mock-javis-server.js — a tiny stand-in for javis-server used by the Phase-3
  * Tier-2 dry-run. It boots on an ephemeral port (port 0), mirrors the real
  * endpoint shapes, asserts the contract invariants (bearer auth, naive-local
- * timestamps, dedup_key, status enum, markdown content), and records a call log
+ * timestamps, dedup_key, status enum, markdown content, optional per-card dedup_key), and records a call log
  * a dry-run can introspect.
  *
  * It is INTENTIONALLY a contract MIRROR, not a real server: if javis-server's
@@ -113,7 +113,7 @@ function start(opts = {}) {
         record(422, { reason: 'content not non-empty string' });
         return send(res, 422, { error: 'content must be a non-empty string' });
       }
-      record(200, { skill: body.skill, contentLen: body.content.length });
+      record(200, { skill: body.skill, contentLen: body.content.length, dedup_key: body.dedup_key });
       return send(res, 200, { task_id: 1 });
     }
 

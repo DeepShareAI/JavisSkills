@@ -1,7 +1,7 @@
 # The openclaw → javis-server → iOS contract
 
 This is the single prose description of the server boundary that
-`references/javis-contract.js` (CONTRACT_VERSION `1.0.1`) encodes in code. Every
+`references/javis-contract.js` (CONTRACT_VERSION `1.1.0`) encodes in code. Every
 HiJavis skill a user runs crosses this boundary; the vendored module exists so no
 generated skill has to re-derive it. When the two disagree, **the module wins** —
 this doc explains *why* each rule exists; the module enforces it.
@@ -103,12 +103,19 @@ Content-Type: application/json
 {
   "skill":      "calendar-extractor",   // required
   "content":    "## 2 new events\n- Lunch with Dana ...",  // required MARKDOWN
-  "session_id": "sess-..."              // optional; omit for default session
+  "session_id": "sess-...",             // optional; omit for default session
+  "dedup_key":  "2026-06-09|lunch with dana|..."  // optional; routes into the card's per-card session
 }
 ```
 
 `postAgentPush` requires a non-empty `content` **string** and a `skill`; non-2xx
 throws. Note the wire field is `session_id`; the JS arg is `sessionId`.
+
+The JS arg is `dedupKey`; the wire field is `dedup_key`. Pass the card's
+`skill_data` `dedup_key` to land the push in that card's own Agent Chat session.
+Session routing precedence is explicit `session_id` → derived `(skill, dedup_key)`
+→ most-recent → fresh. (The read-side `session_id` on `GET /api/skill/data` is
+**iOS-only** — generated skills do not read skill_data.)
 
 ---
 

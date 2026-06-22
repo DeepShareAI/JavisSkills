@@ -23,7 +23,11 @@
  *  Write:  POST /api/skill/data  { skill, type, merge, window?, items[] }
  *            each item: { dedup_key, payload, status in {pending,confirmed},
  *                         start_at, end_at, source_ref? }
- *          POST /api/agent/push  { skill, content (MARKDOWN), session_id? }
+ *          POST /api/agent/push  { skill, content (MARKDOWN), session_id?, dedup_key? }
+ *            session routing precedence (server): explicit session_id ->
+ *            derived from (skill, dedup_key) -> most-recent session -> fresh.
+ *            Pass dedup_key (the card's skill_data key) to land the push in that
+ *            card's own Agent Chat session.
  *  Read:   GET  /api/transcripts/recent  (gateway-token auth)
  *  TZ invariant: start_at/end_at written to skill_data MUST be NAIVE LOCAL
  *          wall-clock 'YYYY-MM-DDTHH:MM:SS' with NO trailing Z and NO +HH:MM
@@ -45,7 +49,7 @@ const JAVIS_BASE = process.env.JAVIS_SERVER_URL || 'http://javis-server:8000';
 // Stamped into every vendored copy. Phase-3 validation compares this against the
 // canonical module to catch drift, and the success report prints it. Bump on any
 // change to the contract surface below.
-const CONTRACT_VERSION = '1.0.1';
+const CONTRACT_VERSION = '1.1.0';
 
 // ---- auth ----------------------------------------------------------------
 // Build the Bearer headers for every server call. The token is platform-injected
@@ -140,14 +144,23 @@ function assertNaiveLocal(s) {
 // POST /api/agent/push — deliver a MARKDOWN digest to the user's iOS chat.
 // `content` is markdown (the cron/push path renders no native cards). Throws on
 // any non-2xx so a generated skill never silently swallows a failed delivery.
-async function postAgentPush({ skill, content, sessionId } = {}) {
+async function postAgentPush({ skill, content, sessionId, dedupKey } = {}) {
   if (!skill || !String(skill).trim()) {
     throw new Error('postAgentPush: `skill` is required.');
   }
   if (typeof content !== 'string' || !content.trim()) {
     throw new Error('postAgentPush: `content` must be a non-empty markdown string.');
   }
-  const body = { skill, content, session_id: sessionId };
+  // session routing: an explicit sessionId wins; otherwise a dedup_key lets the
+  // server derive the card's own per-card session. Send each field only when set,
+  // so the no-arg call behaves exactly as before (history-reuse).
+  const body = { skill, content };
+  if (sessionId !== undefined && sessionId !== null && String(sessionId).trim()) {
+    body.session_id = sessionId;
+  }
+  if (dedupKey !== undefined && dedupKey !== null && String(dedupKey).trim()) {
+    body.dedup_key = dedupKey;
+  }
   const res = await fetch(`${JAVIS_BASE}/api/agent/push`, {
     method: 'POST',
     headers: authHeaders(),
