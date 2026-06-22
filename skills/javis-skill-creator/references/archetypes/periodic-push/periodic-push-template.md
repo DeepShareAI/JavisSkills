@@ -65,7 +65,7 @@ archetype are flagged **(new)**.
 ## Generated file: `scripts/javis-contract.js`
 
 **Do not template this file.** Copy `references/javis-contract.js` **verbatim (byte-identical)**
-into `scripts/javis-contract.js`. It is `CONTRACT_VERSION` 1.0.1 and exports `JAVIS_BASE`,
+into `scripts/javis-contract.js`. It is `CONTRACT_VERSION` 1.1.0 and exports `JAVIS_BASE`,
 `CONTRACT_VERSION`, `authHeaders`, `postAgentPush`, `postSkillData`, `toNaiveLocal`,
 `localAnchor`, `assertNaiveLocal`, `getRecentTranscripts`, `buildCronAdd`.
 
@@ -104,7 +104,7 @@ node scripts/register.js [userId] <name>
 node scripts/{{slug_base}}.js fetch
 node scripts/{{slug_base}}.js [userId] fetch [--since <ISO>] [--limit N]
 
-# Push: read extracted-items JSON on stdin -> write skill_data (pending) + push markdown digest
+# Push: read extracted-items JSON on stdin -> write skill_data (pending) + per-card markdown push
 node scripts/{{slug_base}}.js push  < items.json
 node scripts/{{slug_base}}.js [userId] push  < items.json
 
@@ -133,7 +133,9 @@ headers, server URLs, timestamps, or cron args itself — it only calls the cont
    - dedups items against per-user local state (`data/users/<userId>.json`, atomic writes),
    {{#if writes_skill_data}}- calls `postSkillData({ skill, type: '{{skill_data_type}}', merge: 'upsert', items })` with every
      item `status: 'pending'` — the iOS app renders these rows with Confirm/Discard,{{/if}}
-   - calls `postAgentPush({ skill, content })` with a **markdown** digest of the new items.
+   {{#if writes_skill_data}}- calls `postAgentPush({ skill, content, dedupKey })` once per card, passing that
+     card's `dedup_key`, so each card's markdown lands in its **own** Agent Chat session,{{/if}}
+   {{#if !writes_skill_data}}- calls `postAgentPush({ skill, content })` with one **markdown** digest of the new items,{{/if}}
 
 > `postSkillData` runs `assertNaiveLocal` on every `start_at`/`end_at` before the request leaves
 > the process: a zoned instant (`…Z` or `…+HH:MM`) throws here rather than silently shifting a day
@@ -343,6 +345,23 @@ async function readStdinItems() {
   return Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : []);
 }
 
+// Build a per-card markdown push. With per-card Agent Chat sessions, this card's
+// push is routed (by its dedup_key) into the card's own chat. Markdown ONLY.
+function formatCardPush(it, tz) {
+  const p = it.payload || {};
+  const title = p.title || it.dedup_key || '(untitled)';
+  const lines = ['{{digest_heading}}', '', `- **${title}**`];
+  {{#if has_temporal_items}}
+  if (it.start_at) {
+    let when = it.start_at.replace('T', ' ');
+    if (it.end_at) when += ` – ${it.end_at.replace('T', ' ')}`;
+    lines.push(`  - 🕘 ${when}`);
+  }
+  {{/if}}
+  // TODO: add the {{skill_data_type}}-specific payload fields you want shown.
+  return lines.join('\n');
+}
+
 // Build the markdown digest. Markdown ONLY — never card directives (the push path
 // renders no native cards).
 function formatDigest(items, tz) {
@@ -404,9 +423,18 @@ async function doPush(deps = {}) {
   await postSkillData({ skill: SLUG, type: SKILL_DATA_TYPE, merge: 'upsert', items });
   {{/if}}
 
-  // Deliver the markdown digest (markdown only — no native cards on the push path).
-  const content = formatDigest(items, tz);
-  await postAgentPush({ skill: SLUG, content });
+  {{#if writes_skill_data}}
+  // Per-card push: route each card's markdown into its OWN Agent Chat session by
+  // passing the card's dedup_key (server derives the session from skill+dedup_key).
+  // Omitting dedup_key would fall back to history-reuse and merge all cards into one chat.
+  for (const it of items) {
+    await postAgentPush({ skill: SLUG, content: formatCardPush(it, tz), dedupKey: it.dedup_key });
+  }
+  {{/if}}
+  {{#if !writes_skill_data}}
+  // No structured cards: deliver ONE aggregate markdown digest (no per-card routing).
+  await postAgentPush({ skill: SLUG, content: formatDigest(items, tz) });
+  {{/if}}
 
   for (const it of fresh) seen[it.dedup_key] = nowIso;
   state.seen = seen; state.lastRunAt = nowIso; save(state);
@@ -420,7 +448,7 @@ async function main() {
   throw new Error(`Unknown subcommand '${subcommand}'. Use 'fetch' or 'push' (see --help).`);
 }
 
-module.exports = { doFetch, doPush, resolveTz, formatDigest, toSkillDataItem };
+module.exports = { doFetch, doPush, resolveTz, formatCardPush, formatDigest, toSkillDataItem };
 
 if (require.main === module) {
   main().catch((err) => { console.error('❌', err.message); process.exit(1); });
