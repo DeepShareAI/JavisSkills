@@ -9,7 +9,7 @@ A personal-plugin bundle for the Javis ecosystem.
 | Component | Type | Purpose |
 |---|---|---|
 | `javis-filesystem` | Skill | Local filesystem + paper-project operations. Drop-in replacement for the Workspace-MCP stdio server. |
-| `content-brainstorming` | Skill | Format-aware brainstorming for reports, articles, news pieces, and blog posts. Pulls Javis transcripts via the connector + accepts user files, then writes a structured brief to `briefs/`. Does not draft prose. |
+| `javis-brainstorming` | Skill | Format-aware brainstorming for reports, articles, news pieces, and blog posts. Pulls Javis transcripts via the connector + accepts user files, then writes a structured brief to `briefs/`. Does not draft prose. |
 | `javis-skill-creator` _(v0.4.2)_ | Skill | Scaffolds new HiJavis (openclaw) skills that follow the periodic-push loop (cron → Node script → POST `/api/agent/push` → Socket.IO → iOS). Runs a Phase 0 feasibility gate (warns + suggests workarounds for anything the architecture can't support, then offers a degraded build) before walking through 7 questions and generating a bundle under `${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/`; validates with lint + dry-run. Set `JAVIS_SKILL_BASE_DIR` in your shell rc to point at your personal ClawSkills registry parent (defaults to `$HOME`). |
 | `javis-mcp` | Connector | Remote MCP server at `https://mcp.javis.is/mcp`. Voice sessions, transcripts, group transcripts, summaries, full-text search. |
 
