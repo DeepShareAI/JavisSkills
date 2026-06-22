@@ -16,14 +16,14 @@ Skills run inside a per-user openclaw Docker container (`openclaw-user-<sha256(u
 
 Generated skill code must NOT hardcode this URL directly. Instead it resolves the base via the canonical contract module (see below), which reads `process.env.JAVIS_SERVER_URL || 'http://javis-server:8000'`. The `JAVIS_SERVER_URL` env override is the **testability hook**: production never sets it (so the default applies), but the local mock-server dry-run sets it to `http://127.0.0.1:<port>` to repoint every server call. Do not strip the env read — it is what makes the Phase-3 dry-run possible without a real javis-server.
 
-**Canonical contract module — `javis-contract.js`:** `references/javis-contract.js` (CONTRACT_VERSION `1.0.1`) is the single source of truth for how a skill talks to javis-server. It is **vendored verbatim** (byte-identical) into every generated skill at `scripts/javis-contract.js`. The entry script never builds auth headers, formats timestamps, constructs server URLs, or assembles cron args itself — it only calls into this module. Exposed API:
+**Canonical contract module — `javis-contract.js`:** `references/javis-contract.js` (CONTRACT_VERSION `1.1.0`) is the single source of truth for how a skill talks to javis-server. It is **vendored verbatim** (byte-identical) into every generated skill at `scripts/javis-contract.js`. The entry script never builds auth headers, formats timestamps, constructs server URLs, or assembles cron args itself — it only calls into this module. Exposed API:
 
 | Export | Purpose |
 |---|---|
 | `JAVIS_BASE` | `process.env.JAVIS_SERVER_URL \|\| 'http://javis-server:8000'` — the base URL with the override hook |
-| `CONTRACT_VERSION` | `'1.0.1'` — stamped; used by the drift check and printed in the success report |
+| `CONTRACT_VERSION` | `'1.1.0'` — stamped; used by the drift check and printed in the success report |
 | `authHeaders()` | `{ Authorization: 'Bearer ' + OPENCLAW_GATEWAY_TOKEN, 'Content-Type': 'application/json' }`; **throws** if the token is unset/blank |
-| `postAgentPush({ skill, content, sessionId })` | `POST /api/agent/push`; `content` is non-empty **markdown** |
+| `postAgentPush({ skill, content, sessionId, dedupKey })` | `POST /api/agent/push`; `content` is non-empty **markdown**; optional `dedupKey` routes into the card's per-card session |
 | `postSkillData({ skill, type, merge, window, items })` | `POST /api/skill/data`; runs `assertNaiveLocal` on each `start_at`/`end_at`, requires non-empty `dedup_key`, validates `status` |
 | `toNaiveLocal(iso, tz)` / `localAnchor(iso, tz)` | naive-local wall-clock helpers (handle ICU 24:00 rollover) |
 | `assertNaiveLocal(s)` | **throws** on a trailing `Z` or `+HH:MM`/`-HH:MM` offset |
@@ -36,7 +36,7 @@ Per-user data convention: `<skill>/data/users/<userId>.json`
 
 ## Server callback — `POST /api/agent/push`
 
-The push endpoint javis-server exposes for skills to deliver content into a user's iOS chat. Auth via gateway bearer (also accepts Clerk JWT). Generated skills call this through `javis-contract.js`'s `postAgentPush({ skill, content, sessionId })` rather than building the request by hand.
+The push endpoint javis-server exposes for skills to deliver content into a user's iOS chat. Auth via gateway bearer (also accepts Clerk JWT). Generated skills call this through `javis-contract.js`'s `postAgentPush({ skill, content, sessionId, dedupKey })` rather than building the request by hand.
 
 ```
 POST http://javis-server:8000/api/agent/push
@@ -46,9 +46,12 @@ Content-Type: application/json
 {
   "skill": "<slug>",            // required; routes to user's /<slug> agent chat thread
   "content": "<formatted text>", // required; markdown
-  "session_id": "<uuid>"         // optional; if omitted, server uses most recent session for this skill
+  "session_id": "<uuid>",        // optional; if omitted, server uses most recent session for this skill
+  "dedup_key": "<card-key>"      // optional; routes into the card's derived per-card session
 }
 ```
+
+Session routing precedence (server): explicit `session_id` → derived from `(skill, dedup_key)` → most-recent session → fresh. Pass the card's `dedup_key` (the same string written to that `skill_data` row) so the push lands in that card's own Agent Chat session.
 
 Server saves an `AgentTask` row (status=success, skill=<slug>) and broadcasts Socket.IO `AGENT_PUSH` to all of the user's connected iOS clients. The message appears in the iOS agent chat under the skill's name.
 

@@ -8,7 +8,7 @@ keywords: hijavis, openclaw, skill, scaffold, generator, periodic-push, interact
 
 When the user asks to create a new HiJavis skill (one that runs in their per-user openclaw container — optionally on a cron, optionally calling back to javis-server / iOS), follow this skill exactly.
 
-**Hard rule — loop conformance.** Every skill this generator produces, whether invoked from the Claude desktop app or Claude Code, MUST conform to the HiJavis loop (iOS ↔ javis-server ↔ per-user openclaw container ↔ workspace skills ↔ cron ↔ channels + push → iOS Socket.IO) AND to the **vendored contract spine** (`references/javis-contract.js`, CONTRACT_VERSION `1.0.1`). The entry script of every generated skill touches the server boundary ONLY through that module — it never builds auth headers, formats timestamps, constructs server URLs, or assembles cron args itself. The Phase 0 feasibility gate below is mandatory and runs BEFORE the questions — never skip it.
+**Hard rule — loop conformance.** Every skill this generator produces, whether invoked from the Claude desktop app or Claude Code, MUST conform to the HiJavis loop (iOS ↔ javis-server ↔ per-user openclaw container ↔ workspace skills ↔ cron ↔ channels + push → iOS Socket.IO) AND to the **vendored contract spine** (`references/javis-contract.js`, CONTRACT_VERSION `1.1.0`). The entry script of every generated skill touches the server boundary ONLY through that module — it never builds auth headers, formats timestamps, constructs server URLs, or assembles cron args itself. The Phase 0 feasibility gate below is mandatory and runs BEFORE the questions — never skip it.
 
 ## Pre-flight (do BEFORE asking any question)
 
@@ -72,7 +72,7 @@ Ask in this order; do NOT batch. **Q0 (archetype) comes first** and decides whic
 
 Pick the archetype from the Phase 0 intent. Offer exactly two options:
 
-- **`periodic-push`** — *"Runs on a schedule (or on demand) and pushes results to my iOS chat."* A cron fires → the skill fetches recent transcripts → an agent extracts structured items → the skill writes them to `skill_data` (status `pending`, rendered as Confirm/Discard rows) and delivers a **markdown** digest via `postAgentPush`. Generalizes `calendar-extractor`. **This is the default** when the intent is "summarize / digest / remind / extract on a schedule."
+- **`periodic-push`** — *"Runs on a schedule (or on demand) and pushes results to my iOS chat."* A cron fires → the skill fetches recent transcripts → an agent extracts structured items → the skill writes them to `skill_data` (status `pending`, rendered as Confirm/Discard rows) and delivers a **markdown** digest via `postAgentPush`, one push per card carrying its `dedup_key` so each card opens its own Agent Chat session. Generalizes `calendar-extractor`. **This is the default** when the intent is "summarize / digest / remind / extract on a schedule."
 - **`interactive-credentials`** — *"User asks for something that needs me to sign into a third-party service (Luma, etc.), then I call that service and answer in the same chat."* Runs inside a **live SSE agent turn**: checks `skill_credentials_status(provider)`, runs `skill_credentials_request_external_auth(provider)` if unauthenticated, then the entry script reads the provider cookies from env and calls the third-party API, returning results inline. Generalizes `luma-event-manager`. Because output is a live turn, it MAY emit native cards.
 
 Set `archetype` to the chosen value. **Now load that archetype's template set** (Pre-flight step 4). The archetype determines which of the remaining questions apply:
@@ -145,7 +145,7 @@ Resolve every substitution marker per the table at the top of `references/archet
 | `scripts/push-toggle.js` | always | prefs include `tz`; cron argv built via `buildCronAdd` only |
 | `scripts/register.js` | only if `needs_register` | |
 
-**The 6 gaps are closed by construction** (they live in the template, not in prose you must remember): (1) cron argv only via `buildCronAdd` (no `--schedule`); (2) `data.js` has `resolveUserId` + `DEFAULT_USER_ID='self'`; (3) `push-toggle.js` prefs carry `tz`; (4) atomic writes; (5) markdown-only push section + `formatDigest` emits markdown only; (6) `postSkillData`/`toNaiveLocal` give the canonical `skill_data` schema + naive-local timestamps.
+**The 6 gaps are closed by construction** (they live in the template, not in prose you must remember): (1) cron argv only via `buildCronAdd` (no `--schedule`); (2) `data.js` has `resolveUserId` + `DEFAULT_USER_ID='self'`; (3) `push-toggle.js` prefs carry `tz`; (4) atomic writes; (5) markdown-only push, routed per-card via `postAgentPush({…, dedupKey})`; (6) `postSkillData`/`toNaiveLocal` give the canonical `skill_data` schema + naive-local timestamps.
 
 ### If `archetype == interactive-credentials`
 
@@ -317,14 +317,21 @@ echo "$CALLS" | node -e '
     const { calls } = JSON.parse(s);
     const bad = calls.filter(c => !c.ok);
     const hitData = calls.some(c => c.path === "/api/skill/data" && c.ok);
-    const hitPush = calls.some(c => c.path === "/api/agent/push" && c.ok);
+    const pushes  = calls.filter(c => c.path === "/api/agent/push" && c.ok);
     const hitRead = calls.some(c => c.path === "/api/transcripts/recent" && c.ok);
-    console.log("CALL LOG:\n" + calls.map(c=>`  ${c.method} ${c.path} -> ${c.status}${c.reason?" ("+c.reason+")":""}`).join("\n"));
+    console.log("CALL LOG:\n" + calls.map(c=>`  ${c.method} ${c.path} -> ${c.status}${c.dedup_key?" ["+c.dedup_key+"]":""}${c.reason?" ("+c.reason+")":""}`).join("\n"));
     if (bad.length) { console.error("T2 FAIL: non-2xx call(s): " + bad.map(c=>c.path+" "+c.status+" "+(c.reason||"")).join("; ")); process.exit(1); }
     if (!hitRead) { console.error("T2 FAIL: never hit /api/transcripts/recent"); process.exit(1); }
-    if (!hitPush) { console.error("T2 FAIL: never pushed markdown to /api/agent/push"); process.exit(1); }
-    // skill_data is expected for writes_skill_data skills (the default).
-    console.log(hitData ? "T2 ok: skill_data + push, all auth\x27d & naive-local" : "T2 ok: push only (no skill_data rows)");
+    if (!pushes.length) { console.error("T2 FAIL: never pushed markdown to /api/agent/push"); process.exit(1); }
+    // For a writes_skill_data skill (the default), every push must carry the card dedup_key
+    // so it routes into that card own Agent Chat session.
+    if (hitData) {
+      const missing = pushes.filter(p => !p.dedup_key);
+      if (missing.length) { console.error("T2 FAIL: " + missing.length + " push(es) missing dedup_key (per-card routing broken)"); process.exit(1); }
+      console.log("T2 ok: skill_data + " + pushes.length + " per-card push(es), all auth\x27d, naive-local & routed by dedup_key");
+    } else {
+      console.log("T2 ok: aggregate push only (no skill_data rows)");
+    }
   });
 '
 ```
