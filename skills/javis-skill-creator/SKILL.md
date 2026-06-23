@@ -72,7 +72,7 @@ Ask in this order; do NOT batch. **Q0 (archetype) comes first** and decides whic
 
 Pick the archetype from the Phase 0 intent. Offer exactly two options:
 
-- **`periodic-push`** — *"Runs on a schedule (or on demand) and pushes results to my iOS chat."* A cron fires → the skill fetches recent transcripts → an agent extracts structured items → the skill writes them to `skill_data` (status `pending`, rendered as Confirm/Discard rows) and delivers a **markdown** digest via `postAgentPush`, one push per card carrying its `dedup_key` so each card opens its own Agent Chat session. Generalizes `calendar-extractor`. **This is the default** when the intent is "summarize / digest / remind / extract on a schedule."
+- **`periodic-push`** — *"Runs on a schedule (or on demand) and pushes results to my iOS chat."* A cron fires → the skill fetches recent transcripts → an agent extracts structured items → the skill writes them to `skill_data` (status `pending`, rendered as Confirm/Discard rows) and delivers a **markdown** digest via `postAgentPush`, one push per card carrying its `dedup_key` so each card opens its own Agent Chat session. A pushed card is then **editable in its own thread**: when the user replies inside a card's chat, javis-server injects a `[CURRENT CARD]` block and the entry script's `update` subcommand upserts the corrected row with `status:"confirmed"` (passing the `dedup_key` back verbatim, never recomputed). Generalizes `calendar-extractor`. **This is the default** when the intent is "summarize / digest / remind / extract on a schedule."
 - **`interactive-credentials`** — *"User asks for something that needs me to sign into a third-party service (Luma, etc.), then I call that service and answer in the same chat."* Runs inside a **live SSE agent turn**: checks `skill_credentials_status(provider)`, runs `skill_credentials_request_external_auth(provider)` if unauthenticated, then the entry script reads the provider cookies from env and calls the third-party API, returning results inline. Generalizes `luma-event-manager`. Because output is a live turn, it MAY emit native cards.
 
 Set `archetype` to the chosen value. **Now load that archetype's template set** (Pre-flight step 4). The archetype determines which of the remaining questions apply:
@@ -145,7 +145,7 @@ Resolve every substitution marker per the table at the top of `references/archet
 | `scripts/push-toggle.js` | always | prefs include `tz`; cron argv built via `buildCronAdd` only |
 | `scripts/register.js` | only if `needs_register` | |
 
-**The 6 gaps are closed by construction** (they live in the template, not in prose you must remember): (1) cron argv only via `buildCronAdd` (no `--schedule`); (2) `data.js` has `resolveUserId` + `DEFAULT_USER_ID='self'`; (3) `push-toggle.js` prefs carry `tz`; (4) atomic writes; (5) markdown-only push, routed per-card via `postAgentPush({…, dedupKey})`; (6) `postSkillData`/`toNaiveLocal` give the canonical `skill_data` schema + naive-local timestamps.
+**The 6 gaps are closed by construction** (they live in the template, not in prose you must remember): (1) cron argv only via `buildCronAdd` (no `--schedule`); (2) `data.js` has `resolveUserId` + `DEFAULT_USER_ID='self'`; (3) `push-toggle.js` prefs carry `tz`; (4) atomic writes; (5) markdown-only push, routed per-card via `postAgentPush({…, dedupKey})`; (6) `postSkillData`/`toNaiveLocal` give the canonical `skill_data` schema + naive-local timestamps. When `writes_skill_data`, the template also wires the **in-thread edit/confirm path**: a card a skill pushes is editable in its own thread — the agent reads the server-injected `[CURRENT CARD]` block and runs the entry script's `update` subcommand, which upserts the corrected row with `status:"confirmed"` (`pending → confirmed`) passing the `dedup_key` back **verbatim** (never recomputed, or a duplicate row appears).
 
 ### If `archetype == interactive-credentials`
 
@@ -274,7 +274,7 @@ grep -rnE "chat_emit_|EventList|EventCard|ActionButtons|SuccessCard" "$OUTPUT_DI
 
 ### Tier 2 — mock-server dry-run (`references/mock-server/mock-javis-server.js`)
 
-Self-contained: a local Node process, no real javis-server, no network. The mock asserts bearer auth, the naive-local regex, non-empty `dedup_key`, the status enum, and non-empty markdown `content`, and records a call log at `GET /__calls`.
+Self-contained: a local Node process, no real javis-server, no network. The mock asserts bearer auth, the naive-local regex, non-empty `dedup_key`, the status enum, and non-empty markdown `content`, and records a call log at `GET /__calls`. For `POST /api/skill/data` the log also carries a per-item `{ dedup_key, status }` summary, so the edit sub-test can assert an in-thread edit upserted a specific `dedup_key` with `status:"confirmed"`.
 
 **Boot the mock and export the env hooks** (`JAVIS_SERVER_URL` repoints every contract call at the mock; the fake `OPENCLAW_GATEWAY_TOKEN` satisfies `authHeaders()`):
 ```bash
@@ -309,17 +309,42 @@ node -e '
   && echo "T2 push ok" || { echo "T2 push FAIL"; cat /tmp/javis-push.out; }
 ```
 
+**Edit sub-test — only when `writes_skill_data`** (a `writes_skill_data=false` skill has no cards, no `update` subcommand: skip this and the `EDIT_KEY` assertion below). Simulate the user editing a pushed card *in its own thread*: feed `update` ONE corrected item that reuses a `dedup_key` written in the push step (here, a changed `start_iso`). The `dedup_key` is passed back **verbatim** — never recomputed — so the row is overwritten in place and flipped `pending → confirmed`:
+```bash
+# Reuse the first fixture event's dedup_key (the same string the push step wrote),
+# bump its start by an hour, and confirm it via the in-thread edit path.
+EDIT_KEY="$(node -e '
+  const ev = require(process.argv[1]);
+  const e = ev[0];
+  process.stdout.write(e.start_at + "|" + e.title);
+' "$FIX")"
+node -e '
+  const ev = require(process.argv[1]);
+  const e = ev[0];
+  const bumped = new Date(new Date(e.start_at).getTime() + 3600e3).toISOString();
+  process.stdout.write(JSON.stringify({
+    dedup_key: e.start_at + "|" + e.title,   // VERBATIM — identical to the pushed key
+    start_iso: bumped, end_iso: e.end_at, tz: "America/Los_Angeles",
+    payload: { title: e.title, location: "Zoom", notes: e.notes },
+  }));
+' "$FIX" | node "$ENTRY" update > /tmp/javis-update.out 2>&1 \
+  && echo "T2 update ok" || { echo "T2 update FAIL"; cat /tmp/javis-update.out; }
+```
+
 **Assert via the mock's call log** — every server call must be a well-formed 2xx (a 401 means auth wasn't wired; a 422 means a naive-local / dedup_key / status / content violation):
 ```bash
 CALLS="$(curl -s "$JAVIS_SERVER_URL/__calls")"
-echo "$CALLS" | node -e '
+# EDIT_KEY is set above only when writes_skill_data (the edit sub-test ran); empty otherwise.
+EDIT_KEY="${EDIT_KEY:-}" node -e '
   let s=""; process.stdin.on("data",d=>s+=d).on("end",()=>{
     const { calls } = JSON.parse(s);
+    const editKey = process.env.EDIT_KEY || "";
     const bad = calls.filter(c => !c.ok);
-    const hitData = calls.some(c => c.path === "/api/skill/data" && c.ok);
+    const dataCalls = calls.filter(c => c.path === "/api/skill/data" && c.ok);
+    const hitData = dataCalls.length > 0;
     const pushes  = calls.filter(c => c.path === "/api/agent/push" && c.ok);
     const hitRead = calls.some(c => c.path === "/api/transcripts/recent" && c.ok);
-    console.log("CALL LOG:\n" + calls.map(c=>`  ${c.method} ${c.path} -> ${c.status}${c.dedup_key?" ["+c.dedup_key+"]":""}${c.reason?" ("+c.reason+")":""}`).join("\n"));
+    console.log("CALL LOG:\n" + calls.map(c=>`  ${c.method} ${c.path} -> ${c.status}${c.dedup_key?" ["+c.dedup_key+"]":""}${c.items?" "+JSON.stringify(c.items):""}${c.reason?" ("+c.reason+")":""}`).join("\n"));
     if (bad.length) { console.error("T2 FAIL: non-2xx call(s): " + bad.map(c=>c.path+" "+c.status+" "+(c.reason||"")).join("; ")); process.exit(1); }
     if (!hitRead) { console.error("T2 FAIL: never hit /api/transcripts/recent"); process.exit(1); }
     if (!pushes.length) { console.error("T2 FAIL: never pushed markdown to /api/agent/push"); process.exit(1); }
@@ -328,12 +353,21 @@ echo "$CALLS" | node -e '
     if (hitData) {
       const missing = pushes.filter(p => !p.dedup_key);
       if (missing.length) { console.error("T2 FAIL: " + missing.length + " push(es) missing dedup_key (per-card routing broken)"); process.exit(1); }
-      console.log("T2 ok: skill_data + " + pushes.length + " per-card push(es), all auth\x27d, naive-local & routed by dedup_key");
+      // Edit sub-test (writes_skill_data only): a /api/skill/data upsert must have recorded the SAME
+      // dedup_key with status:"confirmed" — proving the in-thread edit confirmed the card in place.
+      if (editKey) {
+        const editUpsert = dataCalls.some(c => Array.isArray(c.items) &&
+          c.items.some(it => it.dedup_key === editKey && it.status === "confirmed"));
+        if (!editUpsert) { console.error("T2 FAIL: no skill_data upsert recorded dedup_key " + JSON.stringify(editKey) + " with status:\"confirmed\" (in-thread edit path broken)"); process.exit(1); }
+        console.log("T2 ok: skill_data + " + pushes.length + " per-card push(es) + in-thread edit confirmed " + JSON.stringify(editKey) + ", all auth\x27d, naive-local & routed by dedup_key");
+      } else {
+        console.log("T2 ok: skill_data + " + pushes.length + " per-card push(es), all auth\x27d, naive-local & routed by dedup_key");
+      }
     } else {
       console.log("T2 ok: aggregate push only (no skill_data rows)");
     }
   });
-'
+' <<< "$CALLS"
 ```
 Save the printed `CALL LOG` — Phase 4 prints it.
 
