@@ -24,7 +24,7 @@ Generated skill code must NOT hardcode this URL directly. Instead it resolves th
 | `CONTRACT_VERSION` | `'1.1.0'` — stamped; used by the drift check and printed in the success report |
 | `authHeaders()` | `{ Authorization: 'Bearer ' + OPENCLAW_GATEWAY_TOKEN, 'Content-Type': 'application/json' }`; **throws** if the token is unset/blank |
 | `postAgentPush({ skill, content, sessionId, dedupKey })` | `POST /api/agent/push`; `content` is non-empty **markdown**; optional `dedupKey` routes into the card's per-card session |
-| `postSkillData({ skill, type, merge, window, items })` | `POST /api/skill/data`; runs `assertNaiveLocal` on each `start_at`/`end_at`, requires non-empty `dedup_key`, validates `status` |
+| `postSkillData({ skill, type, merge, window, items })` | `POST /api/skill/data`; runs `assertNaiveLocal` on each `start_at`/`end_at`, requires non-empty `dedup_key`, validates `status`. An upsert with `status:"confirmed"` (same `dedup_key`, verbatim) **confirms a card in place** — this is the in-thread edit path |
 | `toNaiveLocal(iso, tz)` / `localAnchor(iso, tz)` | naive-local wall-clock helpers (handle ICU 24:00 rollover) |
 | `assertNaiveLocal(s)` | **throws** on a trailing `Z` or `+HH:MM`/`-HH:MM` offset |
 | `getRecentTranscripts({ since, limit, sessionId, kbdInput })` | `GET /api/transcripts/recent` (gateway-token auth) |
@@ -85,6 +85,8 @@ Content-Type: application/json
 ```
 
 Server upserts the rows (matching on `dedup_key`), emits SSE `skill_data_updated`, and iOS re-GETs and re-renders.
+
+**In-thread card editing.** Each pushed card opens its own Agent Chat session (routed by `dedup_key`, above). When the user replies *inside* that session, javis-server injects a `[CURRENT CARD]` block into the live agent turn (`POST /api/agent/execute` and `POST /api/agent/stream`) carrying the card's `dedup_key` (verbatim), `skill`, `data_type`, and current fields (`title`, `start_at`, `end_at`, `location`, `attendees`, `notes`, `status`). That block is how a skill learns **which card** a live turn is editing — session→card resolution is server-side. To apply the edit, re-upsert the single corrected row to `/api/skill/data` with `merge:"upsert"` and `status:"confirmed"`, passing the `dedup_key` back **verbatim** (never recompute it, or a duplicate row appears). The `pending → confirmed` flip rides on that upsert's `status` field — no new endpoint. iOS re-renders on `skill_data_updated`.
 
 **Timezone invariant (critical).** `start_at` and `end_at` MUST be **naive local wall-clock** strings of the form `YYYY-MM-DDTHH:MM:SS` with **NO trailing `Z`** and **NO `+HH:MM`/`-HH:MM` offset**. iOS (`ServerDate.parse`) reads them in the device timezone; a zoned instant shifts by the offset (the 9pm → 4am-next-day bug). Use `javis-contract.js`'s `toNaiveLocal(iso, tz)` to convert a UTC instant before posting; `postSkillData` additionally runs `assertNaiveLocal` on every `start_at`/`end_at` and **throws** on a zoned value, so a violation fails fast at the boundary instead of silently shifting a day on iOS. `status` is validated against `{pending, confirmed}` and `dedup_key` must be non-empty.
 

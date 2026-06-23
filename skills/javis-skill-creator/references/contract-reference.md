@@ -117,6 +117,40 @@ Session routing precedence is explicit `session_id` → derived `(skill, dedup_k
 → most-recent → fresh. (The read-side `session_id` on `GET /api/skill/data` is
 **iOS-only** — generated skills do not read skill_data.)
 
+### In-thread card editing
+
+The per-card session (above) is **editable**. When the user replies *inside* a
+pushed card's chat ("6 pm today", "location is Zoom"), javis-server appends a
+`[CURRENT CARD]` block to that live turn's prompt so the skill knows which card the
+reply edits. The block carries:
+
+- `dedup_key` (the card's identity, **verbatim**),
+- `skill`, `data_type`,
+- the card's current fields: `title`, `start_at`, `end_at`, `location`,
+  `attendees`, `notes`, `status`.
+
+The block is injected on a live agent turn — `POST /api/agent/execute` **and**
+`POST /api/agent/stream` — when the turn runs inside a card's session. The server
+resolves which card a session maps to (session→card resolution: it reverses the
+one-way session-id derivation by scanning the user's `skill_data` rows and matching
+the recomputed id) — that resolution is **server-side**; the skill only reads the
+injected block.
+
+To apply the edit, the skill maps the natural-language correction onto changed
+fields/times and re-`POST`s the **single** corrected row to `/api/skill/data` with
+`merge: "upsert"` and `status: "confirmed"` — **no new endpoint.** The
+`pending → confirmed` flip rides on that upsert's `status` field (the server applies
+it atomically with the field overwrite). The hard invariant:
+
+> **Never recompute the `dedup_key` on edit.** It is the card's identity; pass it
+> back exactly as it appeared in the `[CURRENT CARD]` block. The server matches on
+> it to overwrite the row in place. Recomputing it on a time change creates a
+> duplicate row — the bug this path exists to prevent.
+
+`postSkillData` already supports this (it accepts `merge: "upsert"` and
+`status: "confirmed"`), so the in-thread edit needs **no** new contract function and
+**no** `CONTRACT_VERSION` bump.
+
 ---
 
 ## 3. The naive-local timezone invariant (and *why*)

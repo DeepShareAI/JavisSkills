@@ -4,7 +4,9 @@
  * Tier-2 dry-run. It boots on an ephemeral port (port 0), mirrors the real
  * endpoint shapes, asserts the contract invariants (bearer auth, naive-local
  * timestamps, dedup_key, status enum, markdown content, optional per-card dedup_key), and records a call log
- * a dry-run can introspect.
+ * a dry-run can introspect. For POST /api/skill/data it also records a per-item
+ * { dedup_key, status } summary so a dry-run can assert an edit upsert (the
+ * in-thread card-edit path) carried a specific dedup_key with status:"confirmed".
  *
  * It is INTENTIONALLY a contract MIRROR, not a real server: if javis-server's
  * shape changes, this file and references/javis-contract.js are the one place to
@@ -99,7 +101,14 @@ function start(opts = {}) {
           return send(res, 422, { error: 'status must be pending|confirmed', reason });
         }
       }
-      record(200, { skill: body.skill, type: body.type, count: items.length });
+      record(200, {
+        skill: body.skill,
+        type: body.type,
+        count: items.length,
+        // Per-item summary so a dry-run can assert an edit upsert carried a specific
+        // dedup_key with status:"confirmed" (the in-thread card-edit path).
+        items: items.map((it) => ({ dedup_key: it.dedup_key, status: it.status })),
+      });
       return send(res, 200, { upserted: items.length });
     }
 

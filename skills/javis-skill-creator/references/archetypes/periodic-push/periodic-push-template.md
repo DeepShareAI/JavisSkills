@@ -107,7 +107,12 @@ node scripts/{{slug_base}}.js [userId] fetch [--since <ISO>] [--limit N]
 # Push: read extracted-items JSON on stdin -> write skill_data (pending) + per-card markdown push
 node scripts/{{slug_base}}.js push  < items.json
 node scripts/{{slug_base}}.js [userId] push  < items.json
-
+{{#if writes_skill_data}}
+# Update: read ONE corrected item on stdin -> upsert skill_data (status:"confirmed") in place
+# (used when the user edits a card inside its own chat thread — dedup_key passed back verbatim)
+node scripts/{{slug_base}}.js update < item.json
+node scripts/{{slug_base}}.js [userId] update < item.json
+{{/if}}
 # Push management (cron toggle)
 node scripts/push-toggle.js on  [userId] [--time HH:MM] [--channel {{channels_pipe}}] [--tz <IANA>]
 node scripts/push-toggle.js off [userId]
@@ -149,6 +154,62 @@ interactive archetype). Do NOT emit card directives from this skill — format t
 markdown and pass it to `postAgentPush`. The structured `skill_data` rows (not cards) are what give
 iOS its rich Confirm/Discard rendering on the push path.
 
+{{#if writes_skill_data}}
+## Editing a card in its thread
+
+Each card you push opens its **own** Agent Chat session (routed by its `dedup_key`). When the user
+replies inside that session ("6 pm today", "location is Zoom", "actually call it standup"), they are
+**editing that card** — and javis-server tells you which card by injecting a `[CURRENT CARD]` block
+into the live turn's prompt:
+
+```
+[CURRENT CARD]
+dedup_key: 2026-06-09|lunch with dana|...
+skill: {{slug}}
+data_type: {{skill_data_type}}
+title: Lunch with Dana
+start_at: 2026-06-09T12:00:00
+end_at: 2026-06-09T13:00:00
+location: ...
+attendees: ...
+notes: ...
+status: pending
+```
+
+The server resolves which card the session belongs to (session→card resolution is server-side); you
+just read the block. To apply the edit:
+
+1. **Read `dedup_key` from the block VERBATIM.** It is the card's identity. Pass it back unchanged —
+   **never recompute it.** Changing the time must not change the key, or a second row appears (the
+   exact bug this path prevents).
+2. **Map the natural-language correction onto the changed fields/times.** Resolve relative times
+   ("6 pm today", "an hour later") against the card's **existing** `start_at`/`end_at` from the
+   block, then produce ISO instants (`start_iso`/`end_iso`) plus the resolved `tz`. The entry script
+   converts them to naive-local via `toNaiveLocal` — pass instants, not pre-formatted wall-clock.
+3. **Run the `update` subcommand** with that one corrected item:
+
+   ```bash
+   node scripts/{{slug_base}}.js update < item.json
+   ```
+
+   where `item.json` is a single object:
+
+   ```json
+   {
+     "dedup_key": "2026-06-09|lunch with dana|...",
+     {{#if has_temporal_items}}"start_iso": "2026-06-09T18:00:00-07:00",
+     "end_iso": "2026-06-09T19:00:00-07:00",
+     "tz": "America/Los_Angeles",
+     {{/if}}"payload": { "title": "Lunch with Dana", "location": "Zoom" }
+   }
+   ```
+
+The `update` subcommand upserts the single row with `status: "confirmed"` (an in-thread edit **is**
+the confirmation), overwriting the card in place and flipping it `pending → confirmed`. iOS
+re-renders on `skill_data_updated`. There is no second push — the live turn's own text reply is the
+response.
+
+{{/if}}
 {{#if has_cron}}
 ## Push setup (cron)
 
@@ -200,9 +261,10 @@ Supported channels: {{channels_csv}}
 ## Generated file: `scripts/{{slug_base}}.js` (entry script)
 
 This is the only archetype-specific script. It imports `./javis-contract.js` and `./data`, and
-exposes `fetch` and `push` subcommands. It builds output **only** through contract calls
-(`getRecentTranscripts`, `localAnchor`, `toNaiveLocal`, `postSkillData`, `postAgentPush`) — it
-constructs no `Authorization` header, no `http(s)://…` URL, and no cron args.
+exposes `fetch` and `push` subcommands (plus an `update` subcommand for in-thread card edits when
+`writes_skill_data`). It builds output **only** through contract calls (`getRecentTranscripts`,
+`localAnchor`, `toNaiveLocal`, `postSkillData`, `postAgentPush`) — it constructs no `Authorization`
+header, no `http(s)://…` URL, and no cron args.
 
 ```js
 #!/usr/bin/env node
@@ -213,20 +275,25 @@ constructs no `Authorization` header, no `http(s)://…` URL, and no cron args.
  * The entry script touches the server boundary ONLY through ./javis-contract.js —
  * it never builds auth headers, server URLs, timestamps, or cron args itself.
  *
- * Two subcommands:
+ * Subcommands:
  *   fetch  GET recent transcripts via the contract and print them as JSON on stdout
  *          (with a naive-local localAnchor block). The agent reads this and extracts
  *          a JSON array of {{skill_data_type}} items.
  *   push   read the extracted-items JSON array on stdin, dedup it against per-user
  *          local state, write it to skill_data tagged status:"pending", and push a
  *          MARKDOWN digest of the NEW items to the user's iOS chat.
- *
+{{#if writes_skill_data}} *   update read ONE corrected item on stdin (the user edited a card in its own thread),
+ *          upsert it to skill_data tagged status:"confirmed" — passing the card's
+ *          dedup_key back VERBATIM so the row is overwritten in place, never duplicated.
+{{/if}} *
  * Usage:
  *   node {{slug_base}}.js fetch [--since <ISO>] [--limit N]
  *   node {{slug_base}}.js [userId] fetch [--since <ISO>] [--limit N]
  *   node {{slug_base}}.js push  < items.json
  *   node {{slug_base}}.js [userId] push  < items.json
- *   node {{slug_base}}.js --help
+{{#if writes_skill_data}} *   node {{slug_base}}.js update < item.json
+ *   node {{slug_base}}.js [userId] update < item.json
+{{/if}} *   node {{slug_base}}.js --help
  *
  * Env (all injected/handled by the platform + contract):
  *   OPENCLAW_GATEWAY_TOKEN  required — Bearer auth (read only inside javis-contract.js)
@@ -247,7 +314,7 @@ const fs = require('fs');
 
 const SLUG = '{{slug}}';
 const SKILL_DATA_TYPE = '{{skill_data_type}}';
-const SUBCOMMANDS = ['fetch', 'push'];
+const SUBCOMMANDS = ['fetch', 'push'{{#if writes_skill_data}}, 'update'{{/if}}];
 
 // argv is parsed lazily so require()-ing this module from a test is side-effect-free.
 // `rest` defaults to [] so doFetch/doPush can be called directly (with injected deps)
@@ -261,10 +328,12 @@ function parseArgv() {
       '  node {{slug_base}}.js fetch [--since <ISO>] [--limit N]',
       '  node {{slug_base}}.js [userId] fetch [--since <ISO>] [--limit N]',
       '  node {{slug_base}}.js push  < items.json',
-      '',
+      {{#if writes_skill_data}}'  node {{slug_base}}.js update < item.json',
+      {{/if}}'',
       'fetch  GET recent transcripts via the contract -> JSON (+localAnchor) on stdout',
       'push   read extracted-items JSON on stdin -> skill_data (pending) + markdown digest to iOS',
-    ].join('\n'));
+      {{#if writes_skill_data}}'update read ONE corrected item on stdin -> upsert skill_data (status:"confirmed") in place',
+      {{/if}}].join('\n'));
     process.exit(0);
   }
   // userId is optional: a bare subcommand (`{{slug_base}}.js fetch`) must not be
@@ -382,11 +451,13 @@ function formatDigest(items, tz) {
 
 // Convert a raw agent item into a contract-shaped skill_data item. Timestamps are
 // formatted to naive-local HERE so postSkillData's assertNaiveLocal never trips.
-function toSkillDataItem(raw, tz) {
+// `status` defaults to "pending" (the push path); the in-thread `update` path passes
+// "confirmed" so the same shaper produces the edited row.
+function toSkillDataItem(raw, tz, status = 'pending') {
   const item = {
     dedup_key: raw.dedup_key,
     payload: raw.payload || {},
-    status: 'pending',
+    status,
   };
   {{#if has_temporal_items}}
   if (raw.start_iso) item.start_at = toNaiveLocal(raw.start_iso, raw.tz || tz);
@@ -441,14 +512,66 @@ async function doPush(deps = {}) {
   console.log(`Pushed ${fresh.length} new ${SKILL_DATA_TYPE}(s) to iOS.`);
 }
 
+{{#if writes_skill_data}}
+// ---- update --------------------------------------------------------------
+// In-thread card edit. When the user replies inside a pushed card's chat, the
+// server injects a [CURRENT CARD] block (carrying the card's dedup_key VERBATIM)
+// into the live turn. The agent maps the natural-language correction onto changed
+// fields/times and feeds ONE corrected item here:
+//   { dedup_key, start_iso?, end_iso?, payload }
+// We upsert it with status:"confirmed" (an in-thread edit IS the confirmation),
+// passing the dedup_key back UNCHANGED so the row moves/confirms in place — never
+// recompute the key on edit or a duplicate row appears. No local-dedup filtering
+// (an edit always applies) and no postAgentPush (the live turn's own text reply is
+// the response).
+async function readStdinItem() {
+  let input = '';
+  for await (const chunk of process.stdin) input += chunk;
+  input = input.trim();
+  if (!input) throw new Error('update expects ONE corrected item (JSON object) on stdin (got empty input).');
+  let parsed;
+  try { parsed = JSON.parse(input); }
+  catch (e) { throw new Error(`stdin is not valid JSON: ${e.message}`); }
+  // Tolerate a one-element array as well as a bare object.
+  if (Array.isArray(parsed)) {
+    if (parsed.length !== 1) throw new Error(`update expects exactly ONE item (got ${parsed.length}).`);
+    return parsed[0];
+  }
+  return parsed;
+}
+
+async function doUpdate(deps = {}) {
+  const tz = deps.tz || resolveTz(null);
+  const raw = deps.item || await readStdinItem();
+
+  // The dedup_key is the card's identity — it MUST be passed back verbatim, never
+  // recomputed. Changing the time must not change the key, or a second row appears.
+  if (!raw || !raw.dedup_key || !String(raw.dedup_key).trim()) {
+    throw new Error('update requires a non-empty dedup_key (the card identity, passed back verbatim from the [CURRENT CARD] block).');
+  }
+
+  // Shape with status:"confirmed" (an in-thread edit IS the confirmation). Reuse the
+  // shaper so toNaiveLocal runs and assertNaiveLocal cannot trip on the edited times.
+  const item = toSkillDataItem(raw, tz, 'confirmed');
+
+  // Upsert the single corrected row in place. No local-dedup filtering (an edit
+  // always applies); no postAgentPush (the live turn replies in its own text).
+  await postSkillData({ skill: SLUG, type: SKILL_DATA_TYPE, merge: 'upsert', items: [item] });
+
+  console.log(`Updated ${SKILL_DATA_TYPE} ${item.dedup_key} (confirmed).`);
+  return item;
+}
+{{/if}}
+
 async function main() {
   parseArgv();
   if (subcommand === 'fetch') return doFetch();
   if (subcommand === 'push') return doPush();
-  throw new Error(`Unknown subcommand '${subcommand}'. Use 'fetch' or 'push' (see --help).`);
+  {{#if writes_skill_data}}if (subcommand === 'update') return doUpdate();
+  {{/if}}throw new Error(`Unknown subcommand '${subcommand}'. Use {{#if writes_skill_data}}'fetch', 'push', or 'update'{{/if}}{{#if !writes_skill_data}}'fetch' or 'push'{{/if}} (see --help).`);
 }
 
-module.exports = { doFetch, doPush, resolveTz, formatCardPush, formatDigest, toSkillDataItem };
+module.exports = { doFetch, doPush, {{#if writes_skill_data}}doUpdate, {{/if}}resolveTz, formatCardPush, formatDigest, toSkillDataItem };
 
 if (require.main === module) {
   main().catch((err) => { console.error('❌', err.message); process.exit(1); });
