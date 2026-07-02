@@ -44,6 +44,14 @@ from skills).
   tool. Delivery mode is `announce` (deliver to channel) or `none`, defaulting to
   `announce` for isolated `agentTurn` jobs. (openclaw
   `src/cli/cron-cli/register.cron-add.ts:81-270`)
+- **Auto-invocation on completed audio/keyboard units (no manual ask, no
+  cron):** the javis-server session dispatcher invokes every enabled,
+  `risk == "low"` skill's own agent directly after each completed unit; the
+  skill's own agent (this `SKILL.md`) decides relevance and acts in the same
+  invocation. Declared via a `metadata.routes` entry with `risk: low`. Only
+  `risk: low` is ever auto-invoke-eligible today; `medium`/`high` are parsed
+  but never auto-run (fail-closed). (javis-server
+  `app/services/skill_dispatch_service.py`)
 - **Per-user state:** workspace files at `<skill>/data/users/<userId>.json`, and/or
   the server-side `skill_data` table (JSON `payload`, `dedup_key`, optional time
   range via nullable `start_at`/`end_at`) via `/api/agent/skill-data`. A composite

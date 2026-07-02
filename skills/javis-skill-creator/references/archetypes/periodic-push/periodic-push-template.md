@@ -56,6 +56,7 @@ archetype are flagged **(new)**.
 | `needs_register` | Q7 = yes |
 | `writes_skill_data` **(new)** | the skill produces structured rows iOS renders (default **true** for periodic-push; false only for a pure markdown-digest skill with no per-item rows) |
 | `has_temporal_items` **(new)** | extracted items carry a start/end time (drives the `start_at`/`end_at` + `toNaiveLocal` path); false for timeless items (headlines/links) |
+| `has_auto_dispatch` **(new)** | Q8 = yes — a new boolean asking whether this skill should also run automatically right after a completed voice/keyboard unit (no cron, no manual ask); drives the `metadata.routes` block in the generated frontmatter and the auto-dispatch bullet in "When to use" |
 
 > `data.js` and `push-toggle.js` are **always** generated for periodic-push (cron state + dedup
 > state both live on disk). `register.js` is generated only when `needs_register`.
@@ -82,6 +83,12 @@ metadata:
   openclaw:
     runtime:
       node: ">=18"
+{{#if has_auto_dispatch}}
+  routes:
+    - route_id: {{slug}}
+      skill: {{slug}}
+      risk: low
+{{/if}}
 ---
 
 # {{TitleCaseSlug}}
@@ -91,6 +98,13 @@ metadata:
 ## When to use
 
 {{trigger_words_bullets}}
+{{#if has_auto_dispatch}}
+- Automatically, when the javis-server dispatcher invokes this skill
+  directly after a completed voice/keyboard unit — no classifier, no
+  route matching. This skill's own agent decides for itself, using this
+  `SKILL.md`, whether the unit is worth acting on; if not, it does
+  nothing.
+{{/if}}
 
 ## Core commands
 

@@ -86,6 +86,7 @@ Set `archetype` to the chosen value. **Now load that archetype's template set** 
 | Q5 data sources | ✅ | ❌ skip |
 | Q6 push channels | ✅ | ❌ — ask **Q6′ provider name** instead |
 | Q7 per-user state | ✅ | ❌ skip (no state file by default) |
+| Q8 auto-dispatch | ✅ | ❌ skip |
 
 ### Q1: Slug (both archetypes)
 Free-text. Validate against `^[a-z][a-z0-9-]{1,40}$`. If invalid, explain and re-ask.
@@ -118,6 +119,11 @@ Free-text. The lowercase provider name passed to `skill_credentials_*({"provider
 Default yes. If yes: also generate `register.js`. (`data.js` ships for periodic-push regardless, since cron prefs + dedup state both live on disk.)
 *Skip for `interactive-credentials` — no per-user state file or `register.js` by default.*
 
+### Q8: Auto-dispatch on completed units? — **periodic-push only** (yes/no via AskUserQuestion)
+"Should this skill also run automatically right after a voice/keyboard entry completes, the way `calendar-extractor` does — no cron, no manual ask? The skill's own agent decides relevance itself; if the unit isn't relevant, it does nothing. **Default: No** — every enabled auto-dispatch skill's agent runs on *every* completed unit for every user who enables it, so this is opt-in, not the default."
+Sets `has_auto_dispatch` (bool). No risk tier is asked — only `risk: low` is ever auto-invoke-eligible server-side today, so offering `medium`/`high` would just be a dead choice; the generated block always writes `risk: low` when `has_auto_dispatch` is true.
+*Skip for `interactive-credentials` — no auto-dispatch (that archetype runs inside a live SSE agent turn, not on unit completion).*
+
 ## Phase 2 — Generate the bundle
 
 **First, always vendor the contract.** Copy `references/javis-contract.js` **verbatim (byte-identical)** into `$OUTPUT_DIR/scripts/javis-contract.js`. Do not re-author, re-indent, or template it. This is the spine every generated entry script imports; Phase-3 Tier-1 check #4 fails on any drift (including a changed `CONTRACT_VERSION`).
@@ -131,6 +137,7 @@ Compute conditional flags from answers:
 - `needs_register` = Q7 yes
 - `writes_skill_data` = the skill produces structured rows iOS renders (default **true**; false only for a pure markdown-digest skill with no per-item rows)
 - `has_temporal_items` = extracted items carry a start/end time (drives the `start_at`/`end_at` + `toNaiveLocal` path; false for timeless items like headlines/links)
+- `has_auto_dispatch` = Q8 yes (controls whether the generated `SKILL.md` carries a `metadata.routes` block with `risk: low`, enabling the javis-server session dispatcher to invoke this skill's agent directly on every completed unit)
 
 Resolve every substitution marker per the table at the top of `references/archetypes/periodic-push/periodic-push-template.md`. Use that doc's literal file bodies. Generated set:
 
