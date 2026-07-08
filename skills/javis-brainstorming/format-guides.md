@@ -2,7 +2,9 @@
 
 Per-format Step A prompts, MC option flavors, branch question, outline shape, and source priorities.
 
-Load only the section matching the user's Q0 (format) answer. The trunk questions (Q1–Q5) live in `SKILL.md`; this file specifies:
+Load only the section matching the user's Q0 (format) answer. If the intent Q0 answer was **CLARIFY** rather than WRITE, skip the format sections and the Q1–Q5 trunk entirely and load the **Concept clarification** section at the bottom of this file instead.
+
+The trunk questions (Q1–Q5) live in `SKILL.md`; this file specifies:
 
 1. The **branch question** to ask immediately after Q0's Step D (before Q1).
 2. **Format-specific framings** for the trunk-question MC options.
@@ -222,3 +224,94 @@ User's Q0 answer didn't match the four formats above (essay collection, newslett
 Record the picked match as `closest_format` and use that section's branch + framings for the rest of the flow.
 
 If "Other — custom" is picked, fall back to asking the user for the structural beats they want and use those as the outline shape. The trunk Q1–Q5 still apply; the brief structure in SKILL.md is unchanged.
+
+---
+
+## Concept clarification (CLARIFY branch)
+
+Used for: clarifying a concept **for yourself** — pinning down a definition, deciding a real priority order, resolving a drifting or contested idea before you can act on it. Loaded when the intent Q0 answer is **CLARIFY**, not WRITE.
+
+Unlike the WRITE formats, there is **no separate branch question and no Q1–Q5 trunk**. The four questions below (C1–C4) *are* the whole trunk. Ask them in order, each through the same SKILL.md A → B → C → D loop and the same CLI / Desktop / plain-text rendering rules. Never skip Step C. Never combine questions.
+
+### C1 — Goal (after intent Q0, first clarify question)
+
+**Step A:** "What outcome do you want from clarifying this?"
+
+**MC construction (Step C):** classification. Build 3 options that interpret the user's Step B answer as one of the flavors below — all of them land on a **local clarification brief** (never a wiki write, never pitch/strategy messaging):
+- Decide the real priority order / definition (a specific call needs to be made)
+- Understand it for myself (build my own working grasp)
+- Prep to explain it to others (get it clear enough to teach)
+- + "Other (describe)"
+
+Record as `clarify_goal`.
+
+### C2 — Current understanding
+
+**Step A:** "What's your working definition right now?"
+
+**MC construction (Step C):** prose. Build 3 **sharper rephrasings** of the user's Step B answer — each a tighter one-to-two-sentence version of their own working definition — plus "Other (describe)".
+
+Record as `working_definition`.
+
+### C3 — Tension / ambiguity
+
+**Step A:** "What's fuzzy, contested, or drifting about it?"
+
+**MC construction (Step C):** prose. Build 3 **sharpened framings of the tension** — each naming the specific ambiguity or contested edge more precisely than the user's Step B answer did — plus "Other (describe)".
+
+Record as `tension`.
+
+### C4 — Success criterion
+
+**Step A:** "How will you know it's clarified?"
+
+**MC construction (Step C):** prose. Build 3 **sharper one-sentence versions** of the user's Step B success criterion, plus "Other (describe)".
+
+Record as `success_criterion`.
+
+### Edge cases
+
+Same as the writing trunk. "I don't know" / "skip" → record `<unknown>`, still run Steps C and D with a "none of the above (skip)" option. "go back" → replay only the affected question. Abort → no partial brief. The `other (describe)` flag behavior (`*_flagged = true` + a revisit callout) applies to **C1, C3, and C4** (not C2).
+
+### Brief shape (Phase 6 → Phase 7 output)
+
+The CLARIFY branch produces `briefs/YYYY-MM-DD-<slug>-clarification.md`, **local only — it never writes to the Javis wiki.** Every clarify-trunk answer lands somewhere in this template.
+
+```markdown
+# <Concept> — Clarification
+
+**Type:** clarification
+**Date:** YYYY-MM-DD
+**Goal:** <C1 goal>
+**Success signal:** <C4 — how the user will know it's clarified>
+**Status:** reviewed — ready
+
+## Working definition
+<one-paragraph sharpened definition — seeded by C2>
+
+<!-- C1→Goal/Sharpened framing, C2→Working definition, C3→What it is NOT + tension, C4→Success signal. Every clarify-trunk answer lands somewhere in this template. -->
+
+## Why it matters
+<why this concept is worth clarifying / where it's used>
+
+## What it is NOT
+<explicit boundaries — common misreadings ruled out>
+
+## Sharpened framing
+<the decided framing / priority order, per the C1 goal>
+
+## Materials inventory
+### Javis wiki
+- page: <slug> — <one-line description>
+### Linked sources (read one by one)
+- <source slug/id> — <one-line summary> — <relevant excerpt/quote>
+
+## Open questions
+- <anything still undecided>
+```
+
+### Sources matter most
+- The Javis **wiki page** for the concept (primary — resolved and read via the wiki → resources loop in `source-collection.md`)
+- The wiki page's **linked sources**, read one at a time with a per-source summary line
+- The user's own prior notes or files naming the concept
+- Transcripts where the concept was discussed (only with the privacy gate — confirm before pulling any transcript the user did not name)
