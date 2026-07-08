@@ -1,6 +1,6 @@
 # Source Collection
 
-How to pull source materials into a brief — from Javis MCP tools (voice data and the wiki), user-provided files, and links. Load this only when you reach **Phase 3 — Source collection** in `SKILL.md`.
+How to pull source materials into a brief — from Javis MCP tools (voice data and the wiki), user-provided files, and links. Load this only when you reach **Phase 2 — Source collection** in `SKILL.md`.
 
 ## Three streams
 
@@ -84,7 +84,7 @@ Procedure:
 
    No parallel reads. No batching. One source, one summary line, then the next.
 4. **Privacy gate.** The privacy rule above still holds: **confirm before pulling any Javis transcript the user did not explicitly name.** A wiki page linking a transcript is not itself the user naming that transcript — surface the candidate and confirm before calling `get_transcript_tool` on it.
-5. **Feed Phase 4.** Route the extracted page + linked-source material into **Extracted highlights** exactly like the other two streams — same inventory line shape, same highlight pass.
+5. **Feed the highlight pass.** Route the extracted page + linked-source material into **Extracted highlights** exactly like the other two streams — same inventory line shape, same highlight pass.
 
 Record the page and each linked source in the brief's **Materials Inventory** — in the shape the destination brief type calls for:
 
@@ -117,7 +117,7 @@ The flat shape above (including the two `wiki:` example lines) is the **WRITE-br
 
 ## Extracted highlights
 
-After cataloguing sources, do one pass to pull out the **specifically usable** bits:
+As you read each source, pull out its **specifically usable** bits — this happens while cataloguing, not as a separate downstream pass:
 
 - **Quotes**: verbatim, ≤2 sentences. Attribute by `session_id` or person.
 - **Data points**: numbers, dates, named percentages. Attribute by source.
