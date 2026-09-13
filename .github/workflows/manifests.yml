@@ -1,0 +1,22 @@
+name: Manifests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  validate-manifests:
+    name: Validate plugin and marketplace manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate manifests
+        run: node scripts/check-manifests.mjs

@@ -206,19 +206,30 @@ const helperInjection = '<script>\n' + helperScript + '\n</script>';
 // ========== Helper Functions ==========
 
 function readSuperpowersVersion() {
-  const root = path.join(__dirname, '../../..');
-  const manifests = [
-    path.join(root, 'package.json'),
-    path.join(root, '.codex-plugin/plugin.json')
-  ];
+  // Walk up from this script looking for the Superpowers manifest. The name
+  // check is load-bearing: this skill also ships inside other plugins whose
+  // manifests sit at the same depth, and reporting their version as the
+  // Superpowers version would attribute one project's version to another.
+  let dir = __dirname;
 
-  for (const manifest of manifests) {
-    try {
-      const data = JSON.parse(fs.readFileSync(manifest, 'utf-8'));
-      if (data.version) return String(data.version);
-    } catch (e) {
-      // Packaged Codex plugins omit package.json; try the next manifest.
+  for (let i = 0; i < 6; i++) {
+    const manifests = [
+      path.join(dir, 'package.json'),
+      path.join(dir, '.codex-plugin/plugin.json')
+    ];
+
+    for (const manifest of manifests) {
+      try {
+        const data = JSON.parse(fs.readFileSync(manifest, 'utf-8'));
+        if (data.name === 'superpowers' && data.version) return String(data.version);
+      } catch (e) {
+        // Packaged Codex plugins omit package.json; try the next manifest.
+      }
     }
+
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
   }
 
   return 'unknown';

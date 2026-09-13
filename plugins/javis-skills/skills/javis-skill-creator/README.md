@@ -5,15 +5,25 @@ A JavisSkills component. Scaffolds new HiJavis-deployable (openclaw) skills that
 - **periodic-push** — fires on a cron (or on demand), fetches recent transcripts, an agent extracts structured items, the skill writes them to `skill_data` (rendered as Confirm/Discard rows) via `POST /api/skill/data` and delivers a **markdown** digest via `POST /api/agent/push` → Socket.IO → iOS chat. Generalizes `calendar-extractor`.
 - **interactive-credentials** — runs inside a live SSE agent turn: gates on `skill_credentials_status(provider)`, requests external auth if needed, then calls a third-party provider (Luma, etc.) and answers inline. Generalizes `luma-event-manager`.
 
+## Install
+
+This skill ships inside the `javis-skills` plugin, which installs from the same repo in both
+supported hosts:
+
+- **Claude Code / Claude desktop app** — add the marketplace `DeepShareAI/JavisSkills`, then
+  install the `javis-skills` plugin.
+- **Codex CLI** — **Add plugin marketplace** with source `DeepShareAI/JavisSkills`, ref `main`,
+  and sparse path `plugins/javis-skills`, then install the `javis-skills` plugin.
+
 ## Invoke
 
-In Claude Code (Code mode), say one of:
+In any host with a shell (Claude Code, Codex CLI), say one of:
 - "Create a HiJavis skill"
 - "Scaffold a new openclaw skill"
 - "Use javis-skill-creator to make a daily news digest skill"
 - "/javis-skill-creator"
 
-Claude loads `SKILL.md`, runs the Phase 0 feasibility gate, then asks Q0 (archetype) followed by the archetype-relevant subset of Q1-Q7 / Q6′ — one at a time — and writes the generated bundle to `${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/` — that is, your personal ClawSkills registry parent directory (set `JAVIS_SKILL_BASE_DIR` in your shell rc; defaults to `$HOME`). Overwrites if the slug folder already exists.
+Your agent loads `SKILL.md`, runs the Phase 0 feasibility gate, then asks Q0 (archetype) followed by the archetype-relevant subset of Q1-Q7 / Q6′ — one at a time — and writes the generated bundle to `${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/` — that is, your personal ClawSkills registry parent directory (set `JAVIS_SKILL_BASE_DIR` in your shell rc; defaults to `$HOME`). Overwrites if the slug folder already exists.
 
 > Example: with `export JAVIS_SKILL_BASE_DIR=/Users/samuelwei/GoogleDrive/LLM` in `~/.zshrc`, a slug `daily-news` lands at `/Users/samuelwei/GoogleDrive/LLM/ClawSkills/daily-news/`. Without the env var set, it lands at `~/ClawSkills/daily-news/`.
 
@@ -26,13 +36,14 @@ the iOS app is closed — it tells you why (citing the loop), suggests a workaro
 offers to build the supported version. Every generated skill is guaranteed to conform
 to the loop and to the vendored contract spine.
 
-## Running on Claude Desktop vs Claude Code
+## Running with a shell vs without one
 
-In Claude Code (shell available) the full flow runs, including the Tier-1 static checks
-and the Tier-2 mock-server dry-run. On the Claude desktop app (no shell) javis-skill-creator
-still runs the feasibility gate, asks the questions, writes the bundle, and performs the
-Tier-1 checks by inspection, but skips the shell-backed verification and the entire Tier-2
-dry-run, telling you the exact commands to run later in a terminal.
+On a host with a shell (Claude Code, Codex CLI, any agent with a Bash tool) the full flow
+runs, including the Tier-1 static checks and the Tier-2 mock-server dry-run. On a chat-only
+surface with no shell (such as the Claude desktop app) javis-skill-creator still runs the
+feasibility gate, asks the questions, writes the bundle, and performs the Tier-1 checks by
+inspection, but skips the shell-backed verification and the entire Tier-2 dry-run, telling
+you the exact commands to run later in a terminal.
 
 ## What it generates
 
@@ -92,7 +103,7 @@ options chosen by Q0.
 ## Tests
 
 No automated regression tests are bundled with this skill yet. Validate changes by running
-the skill in a fresh Claude Code session (`Use javis-skill-creator to make a <slug> skill`)
+the skill in a fresh shell-enabled session (`Use javis-skill-creator to make a <slug> skill`)
 and inspecting the generated `${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>/` against
 expectations. The skill's own Phase 3 validation runs on every invocation:
 

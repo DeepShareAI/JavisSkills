@@ -3,7 +3,8 @@ __pycache__/
 *$py.class
 *.egg-info/
 .pytest_cache/
-skills/*/out/
+# paper-project scratch output; skills moved to plugins/<plugin>/skills/ in v0.9.0
+plugins/*/skills/*/out/
 .venv/
 venv/
 docs/

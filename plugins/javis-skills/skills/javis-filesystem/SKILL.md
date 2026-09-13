@@ -5,7 +5,7 @@ description: Use whenever the user wants to read, write, list, glob, or stat loc
 
 # JavisFilesystem
 
-Local filesystem and paper-project operations, ported from the Workspace-MCP stdio server. No MCP server required — operations use Claude's built-in tools plus the helper scripts in `scripts/`.
+Local filesystem and paper-project operations, ported from the Workspace-MCP stdio server. No MCP server required — operations use your agent's built-in file tools plus the helper scripts in `scripts/`.
 
 ## When to use
 
@@ -31,7 +31,7 @@ Path traversal outside the root is rejected. See `safety.md` for the full rules.
 
 | What the user asks for | What you do |
 |---|---|
-| Read a text file, PDF, image | Use Claude's built-in `Read` tool — it already handles text/image/PDF. |
+| Read a text file, PDF, image | Use your agent's built-in file-read tool — it already handles text/image/PDF. |
 | List a directory | `Bash`: `ls -la <path>` |
 | Stat a file | `Bash`: `stat -f '%Sm %z %N' <path>` (macOS) or `stat -c '%y %s %n' <path>` (Linux) |
 | Glob | `Bash`: shell glob or `find <root> -name '<pattern>'` |
@@ -44,7 +44,7 @@ Path traversal outside the root is rejected. See `safety.md` for the full rules.
 
 ## Rules
 
-1. **Always use `safe_write.py` for durable writes.** Claude's `Write` is acceptable only for ad-hoc temporary files; use `safe_write.py` for anything you want atomic + allowlisted. See `safety.md`.
+1. **Always use `safe_write.py` for durable writes.** A built-in write tool is acceptable only for ad-hoc temporary files; use `safe_write.py` for anything you want atomic + allowlisted. See `safety.md`.
 2. **Extension allowlist:** writes are restricted to `.md .txt .tex .yaml .yml .json .bib .csv .html`. Anything else is read-only.
 3. **No deletes.** If the user asks to remove a file, tell them to use their shell.
 4. **Check exit codes.** All helper scripts emit JSON to stdout on success (exit 0) and JSON `{"error": "..."}` to stderr on failure (non-zero exit). After every `Bash` call to a script, check the exit code and parse stderr if non-zero.

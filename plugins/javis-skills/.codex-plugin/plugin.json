@@ -1,0 +1,44 @@
+{
+  "name": "javis-skills",
+  "version": "0.9.0",
+  "description": "Javis personal-plugin skills: local filesystem operations, javis-brainstorming for long-form writing, javis-skill-creator (scaffolds new HiJavis/openclaw skills), plus the javis-mcp remote connector.",
+  "author": {
+    "name": "Samuel Wei",
+    "email": "samuel@deepshare.ai"
+  },
+  "homepage": "https://github.com/DeepShareAI/JavisSkills",
+  "repository": "https://github.com/DeepShareAI/JavisSkills",
+  "license": "UNLICENSED",
+  "keywords": [
+    "javis",
+    "hijavis",
+    "openclaw",
+    "transcripts",
+    "brainstorming",
+    "skills",
+    "wiki"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Javis Skills",
+    "shortDescription": "Javis voice transcripts, briefs, and skill scaffolding",
+    "longDescription": "Read Javis voice transcripts, sessions, summaries, and wiki pages, then turn them into a structured writing or concept-clarification brief. Scaffold new HiJavis skills that run in your openclaw container. Includes local filesystem and paper-assembly helpers.",
+    "developerName": "DeepShare AI",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/DeepShareAI/JavisSkills",
+    "defaultPrompt": [
+      "Brainstorm a brief from my Javis transcripts",
+      "Create a new HiJavis skill",
+      "Search my Javis wiki"
+    ],
+    "brandColor": "#0F766E",
+    "composerIcon": "./assets/javis-skills.svg",
+    "logo": "./assets/javis-skills.svg"
+  }
+}
