@@ -20,7 +20,7 @@ Use `scripts/safe_write.py` for every write you care about. It:
 
 `assemble_paper.py` uses the same atomic-rename pattern internally.
 
-**Do not use Claude's `Write` tool for paths the user expects to be durable.** Use `safe_write.py`. Claude's `Write` is acceptable only for ad-hoc throwaway files.
+**Do not use your agent's built-in write tool for paths the user expects to be durable.** Use `safe_write.py`. A built-in write tool is acceptable only for ad-hoc throwaway files.
 
 ## 3. Extension allowlist (writes only)
 

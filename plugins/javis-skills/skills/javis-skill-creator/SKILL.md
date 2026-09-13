@@ -8,11 +8,11 @@ keywords: hijavis, openclaw, skill, scaffold, generator, periodic-push, interact
 
 When the user asks to create a new HiJavis skill (one that runs in their per-user openclaw container — optionally on a cron, optionally calling back to javis-server / iOS), follow this skill exactly.
 
-**Hard rule — loop conformance.** Every skill this generator produces, whether invoked from the Claude desktop app or Claude Code, MUST conform to the HiJavis loop (iOS ↔ javis-server ↔ per-user openclaw container ↔ workspace skills ↔ cron ↔ channels + push → iOS Socket.IO) AND to the **vendored contract spine** (`references/javis-contract.js`, CONTRACT_VERSION `1.1.0`). The entry script of every generated skill touches the server boundary ONLY through that module — it never builds auth headers, formats timestamps, constructs server URLs, or assembles cron args itself. The Phase 0 feasibility gate below is mandatory and runs BEFORE the questions — never skip it.
+**Hard rule — loop conformance.** Every skill this generator produces, whichever host it is invoked from, MUST conform to the HiJavis loop (iOS ↔ javis-server ↔ per-user openclaw container ↔ workspace skills ↔ cron ↔ channels + push → iOS Socket.IO) AND to the **vendored contract spine** (`references/javis-contract.js`, CONTRACT_VERSION `1.1.0`). The entry script of every generated skill touches the server boundary ONLY through that module — it never builds auth headers, formats timestamps, constructs server URLs, or assembles cron args itself. The Phase 0 feasibility gate below is mandatory and runs BEFORE the questions — never skip it.
 
 ## Pre-flight (do BEFORE asking any question)
 
-1. **Detect the runtime.** Try to run a trivial Bash command (e.g. `echo ok`). If it succeeds, set `has_shell = true` (Claude Code / terminal-enabled). If no Bash tool is available (e.g. Claude desktop app), set `has_shell = false`. `has_shell` controls Phase 3 validation (Tier 2 needs a shell) and Phase 4 wording.
+1. **Detect the runtime.** Try to run a trivial Bash command (e.g. `echo ok`). If it succeeds, set `has_shell = true` (a terminal-enabled host — Claude Code, Codex CLI, or any agent with a shell tool). If no Bash tool is available (e.g. a chat-only surface such as the Claude desktop app), set `has_shell = false`. `has_shell` controls Phase 3 validation (Tier 2 needs a shell) and Phase 4 wording.
 
 2. **Resolve the output directory.**
    - If `has_shell`: run
@@ -172,11 +172,11 @@ Do NOT scaffold a `data/` directory in either archetype — periodic-push script
 
 ## Phase 3 — Validate (two tiers)
 
-**Tier 1 (static checks) runs whenever you can write files; it needs no shell beyond the checks below.** If `has_shell` is true, run Tier 1's bash. If `has_shell` is false (e.g. Claude desktop app), you cannot run bash — perform the Tier-1 checks by inspection of what you generated and note that the shell-backed verification (and all of Tier 2) was skipped (see Phase 4 wording).
+**Tier 1 (static checks) runs whenever you can write files; it needs no shell beyond the checks below.** If `has_shell` is true, run Tier 1's bash. If `has_shell` is false (e.g. a chat-only surface such as the Claude desktop app), you cannot run bash — perform the Tier-1 checks by inspection of what you generated and note that the shell-backed verification (and all of Tier 2) was skipped (see Phase 4 wording).
 
 **Tier 2 (mock dry-run) requires a shell. If `has_shell` is false, SKIP Tier 2 entirely** and tell the user verbatim:
 
-> ⚠️ Skipped the mock-server dry-run (no shell in this environment). Before publishing, run these in Claude Code or a terminal from the skill folder: the Tier-1 static checks below, then boot `references/mock-server/mock-javis-server.js` and run the entry script against it (Tier 2).
+> ⚠️ Skipped the mock-server dry-run (no shell in this environment). Before publishing, run these from the skill folder in a shell-enabled host (Claude Code, Codex CLI) or a terminal: the Tier-1 static checks below, then boot `references/mock-server/mock-javis-server.js` and run the entry script against it (Tier 2).
 
 If a check fails, fix and retry once before reporting. Throughout, `$OUTPUT_DIR` is the resolved `${JAVIS_SKILL_BASE_DIR:-$HOME}/ClawSkills/<slug>` and `<entry>` is `<slug_base>.js` (periodic-push) or `<slug>.js` (interactive-credentials).
 
