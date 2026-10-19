@@ -1,6 +1,6 @@
 {
   "name": "javis-skills",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Javis personal-plugin skills: local filesystem operations, javis-brainstorming for long-form writing, javis-skill-creator (scaffolds new HiJavis/openclaw skills), plus the javis-mcp remote connector.",
   "author": {
     "name": "Samuel Wei",

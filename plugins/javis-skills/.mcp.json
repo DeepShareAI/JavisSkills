@@ -2,8 +2,7 @@
   "mcpServers": {
     "javis-mcp": {
       "type": "http",
-      "url": "https://mcp.javis.is/mcp",
-      "oauth_resource": "https://mcp.javis.is/mcp"
+      "url": "https://mcp.javis.is/mcp"
     }
   }
 }
